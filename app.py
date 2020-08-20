@@ -3,9 +3,10 @@
 
 # In[1]:
 
-
+import flask
+import os
+from random import randint
 import plotly.express as px
-from jupyter_dash import JupyterDash
 from datetime import datetime as dt
 import dash
 import dash_core_components as dcc
@@ -35,9 +36,10 @@ df.head()
 
 # In[4]:
 
+server = flask.Flask(__name__)
+server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
+app = dash.Dash(__name__, server=server)
 
-# build app
-app = JupyterDash(__name__)
 
 app.layout = html.Div([
     html.H1("Incident Reports"),
@@ -218,9 +220,10 @@ def update_bar_chart(start_date, end_date, emd_card_num):
 # In[8]:
 
 
-# Run app and click link to display in separate tab
-app.run_server(port=9100)
 
+# Run the Dash app
+if __name__ == '__main__':
+    app.server.run(debug=True, threaded=True)
 
 # In[ ]:
 
