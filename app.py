@@ -134,9 +134,9 @@ app.layout = html.Div(
                         html.Div(
                             className="row",
                             children=[
-                                html.P("""Select Radius for heatmap """),
+                                html.P("""Select Radius for map-graph """),
                                 dcc.Slider(
-                                            id='heatmap-radius',
+                                            id='map-graph-radius',
                                             min=1,
                                             max=10,
                                             step=0.05,
@@ -177,17 +177,16 @@ app.layout = html.Div(
                 html.Div(
                     className="eight columns div-for-charts bg-grey",
                     children=[
-                        dcc.Graph(id="heatmap"),
+                        dcc.Graph(id="map-graph"),
                         html.Div(
-                            className="text-padding",
+                            #className="text-padding",
                             children=[
                                   html.P("""Select any of the bars on the histogram to filter incidents by month"""),
-                                  html.P(""""""),
-                                  html.P(""""""),
+                                
                                
                             ],
                         ),
-                        dcc.Graph(id="bar-chart"),
+                        dcc.Graph(id="histogram"),
                     ],
                 ),
             ],
@@ -201,7 +200,7 @@ app.layout = html.Div(
 # Selected Data in the Histogram updates the Values in the DatePicker
 @app.callback(
     Output("bar-selector", "value"),
-    [Input("bar-chart", "selectedData"), Input("bar-chart", "clickData")],
+    [Input("histogram", "selectedData"), Input("histogram", "clickData")],
 )
 def update_bar_selector(value, clickData):
     holder = []
@@ -217,14 +216,14 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
 
 # %%
 @app.callback(
-    Output('heatmap', 'figure'),
+    Output('map-graph', 'figure'),
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),
-    Input("heatmap-radius", "value"),
+    Input("map-graph-radius", "value"),
     Input('emd-card-num-dropdown', 'value'),
     Input("bar-selector", "value")]
 )
-def update_heatmap(start_date, end_date, radius, emd_card_num, datemonth):
+def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth):
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)        
     date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
@@ -249,7 +248,7 @@ def update_heatmap(start_date, end_date, radius, emd_card_num, datemonth):
     #fig.update_layout(mapbox_style="stamen-terrain", mapbox_center_lon=-86.774372,mapbox_center_lat=36.16228)
     #fig.update_layout(margin={"r":35,"t":0,"l":0,"b":0}, showlegend=False,zoom:10,)
     fig.update_layout(
-        title='Incident heatmap',
+        title='Incident map-graph',
         autosize=True,
         plot_bgcolor="#323130",
         paper_bgcolor="#323130",
@@ -271,7 +270,7 @@ def update_heatmap(start_date, end_date, radius, emd_card_num, datemonth):
 
 # %%
 @app.callback(
-    Output('bar-chart', 'figure'),
+    Output('histogram', 'figure'),
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),
     Input('emd-card-num-dropdown', 'value')]
