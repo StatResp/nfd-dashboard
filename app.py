@@ -8,7 +8,7 @@ import dash_html_components as html
 import pandas as pd
 import numpy as np
 import plotly.express as px
-
+import dataextract
 from dash.dependencies import Input, Output
 from plotly import graph_objs as go
 from plotly.graph_objs import *
@@ -55,13 +55,19 @@ colorVal = [
 #mapbox_access_token = "pk.eyJ1IjoicGxvdGx5bWFwYm94IiwiYSI6ImNrOWJqb2F4djBnMjEzbG50amg0dnJieG4ifQ.Zme1-Uzoi75IaFbieBDl3A"
  
 
-# %%
-# load data 
-with zipfile.ZipFile('geo_out_july_2020_central_time.csv.zip', 'r') as zip_ref:
-    zip_ref.extractall()
-    
-df = pd.read_csv('geo_out_july_2020_central_time.csv', index_col=0)
-df['emdCardNumber'] = df['emdCardNumber'].str.upper()
+# # %%
+# # load data 
+# with zipfile.ZipFile('geo_out_july_2020_central_time.csv.zip', 'r') as zip_ref:
+#     zip_ref.extractall()
+ 
+
+# load data
+df=dataextract.decompress_pickle('geo_out_july_2020_central_time.pbz2')
+
+
+   
+#df = pd.read_pickle('geo_out_july_2020_central_time.pkl')
+#df['emdCardNumber'] = df['emdCardNumber'].str.upper()
 
 # %%
 
