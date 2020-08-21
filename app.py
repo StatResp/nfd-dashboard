@@ -181,7 +181,7 @@ app.layout = html.Div(
                         html.Div(
                             className="text-padding",
                             children=[
-                                  html.P("""Select any of the bars on the histogram to section data by month"""),
+                                  html.P("""Select any of the bars on the histogram to filter incidents by month"""),
                                   html.P(""""""),
                                   html.P(""""""),
                                
