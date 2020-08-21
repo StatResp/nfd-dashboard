@@ -75,11 +75,7 @@ app.layout = html.Div(
                 html.Div(
                     className="four columns div-user-controls",
                     children=[
-                        html.Img(
-                            className="logo", src=app.get_asset_url("dash-logo-new.png")
-                        ),
-                        html.H2("Incident Dashboard"),
-                  
+                        dcc.Markdown('''# [Statresp.ai](https://statresp.ai) | Incident Dashboard'''),
                         html.Div(
                             className="div-for-dropdown",
                             children=[
@@ -168,8 +164,7 @@ app.layout = html.Div(
                                                 }
                                                 for n in range(1,13)
                                             ],
-                                            multi=True,
-                                            placeholder="Select certain months",
+                                            multi=True,                                            
                                         )
                                     ],
                                 ),
@@ -186,7 +181,10 @@ app.layout = html.Div(
                         html.Div(
                             className="text-padding",
                             children=[
-                                "Select any of the bars on the histogram to section data by month."
+                                  html.P("""Select any of the bars on the histogram to section data by month"""),
+                                  html.P(""""""),
+                                  html.P(""""""),
+                               
                             ],
                         ),
                         dcc.Graph(id="bar-chart"),
@@ -259,7 +257,7 @@ def update_heatmap(start_date, end_date, radius, emd_card_num, datemonth):
         margin=dict(l=0, r=35, t=0, b=0),
         mapbox=go.layout.Mapbox(
             accesstoken=mapbox_access_token,
-            style='light',
+            style='streets',
             bearing=0,
             center=go.layout.mapbox.Center(
                 lat=36.16228,
@@ -312,7 +310,8 @@ def update_bar_chart(start_date, end_date, emd_card_num):
             range=[0, 13],
             showgrid=False,
             title='Month',
-            nticks=12,            
+            tickvals = [1, 2, 3,4, 5,6, 7,8, 9,10, 11,12],    
+            ticktext = ['Jan','Feb', 'March', 'Apr', 'May', 'June', 'July','Aug','Sep','Oct','Nov','Dec'],      
             fixedrange=True,
             ticksuffix="",
         ),
