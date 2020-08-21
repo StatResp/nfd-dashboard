@@ -346,6 +346,6 @@ def update_bar_chart(start_date, end_date, emd_card_num):
 
 # %%
 if __name__ == '__main__':
-    app.server.run(debug=True, threaded=True)
+    app.server.run(threaded=True)
 
 # %%
