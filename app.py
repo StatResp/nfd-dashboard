@@ -18,6 +18,7 @@ import zipfile
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 app = dash.Dash(__name__, server=server,meta_tags=[{"name": "viewport", "content": "width=device-width"}])
+app.title='Incident Dashboard'
 
 
 
@@ -153,21 +154,7 @@ app.layout = html.Div(
                                         max=24,
                                         step=1,
                                         value=[0, 24],
-                                        marks={
-                                            0: '12 AM',
-                                            2: '2 AM',
-                                            4: '4 AM',
-                                            6: '6 AM',
-                                            8: '8 AM',
-                                            10: '10 AM',
-                                            12: '12 PM',
-                                            14: '2 PM',
-                                            16: '4 PM',
-                                            18: '6 PM',
-                                            20: '8 PM',
-                                            22: '10 PM',
-                                            24: '12 AM',                                        
-                                        },
+                                        marks={i: '{}:00'.format(str(i).zfill(2)) for i in range(0, 25,4)},
                                     ),
                                     ]
                                     ), 
@@ -446,7 +433,7 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection):
 
 # %%
 if __name__ == '__main__':
-	#app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
-    app.server.run(threaded=True)
+	app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
+    	#app.server.run(threaded=True)
 
 # %%
