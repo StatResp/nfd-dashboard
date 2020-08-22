@@ -170,8 +170,7 @@ app.layout = html.Div(
                                                     step=0.05,
                                                     marks={i: '{}'.format(i) for i in range(1, 11)},
                                                     value=2
-                                                ),
-                                        html.P(id="total-incidents"),
+                                                ),                                       
                                     ]
                                 )
                             ],
@@ -215,14 +214,8 @@ def update_bar_selector(value, clickData):
 # %%
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 
-# Update the total number of rides Tag
-@app.callback(Output("heatmap-text", "children"),   [Input("date-picker", "date"),Input("date-picker-end", "date"),Input("time-slider", "value")])
-def update_total_rides(datestart,dateend,timevalue):
-    return "Incident distribution from %s to %s within %s:00 to %s:00 hours."%(datestart,dateend,timevalue[0],timevalue[1])
-    
-outputdf=df
 @app.callback(
-    Output('total-incidents', "children"),
+    Output('heatmap-text', "children"),
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),    
     Input('emd-card-num-dropdown', 'value'),
@@ -250,9 +243,9 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange):
     if len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['latitude','longitude']]  
-    outputdf=result
-    return "%d incidents"%(outputdf.size)
+            result = result.loc[month_condition][['latitude','longitude']]   
+    return "Incident distribution from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
+  
 # %%
 @app.callback(
     Output('map-graph', 'figure'),
@@ -376,8 +369,12 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection):
 
     result = result.groupby(['month_year']).count().reset_index()
     result.columns = ['month', 'count']
+    monthindex = range(0,12)
+    result=result.reindex(monthindex,fill_value=0)
     result['m']=result['month'].astype(int)
     result=result.sort_values('m')
+    
+    #print(result.index)
     #print(result)
     xVal=result['month']
     yVal=result['count']
