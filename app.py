@@ -171,6 +171,7 @@ app.layout = html.Div(
                                                     marks={i: '{}'.format(i) for i in range(1, 11)},
                                                     value=2
                                                 ),
+                                        html.P(id="total-incidents"),
                                     ]
                                 )
                             ],
@@ -219,7 +220,39 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
 def update_total_rides(datestart,dateend,timevalue):
     return "Incident distribution from %s to %s within %s:00 to %s:00 hours."%(datestart,dateend,timevalue[0],timevalue[1])
     
-
+outputdf=df
+@app.callback(
+    Output('total-incidents', "children"),
+    [Input("date-picker", "date"),
+    Input("date-picker-end", "date"),    
+    Input('emd-card-num-dropdown', 'value'),
+    Input("bar-selector", "value"),
+    Input("time-slider", "value")]
+)
+def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange):
+  
+    if '1002' in emd_card_num:
+        emd_card_num=range(1,136)        
+    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
+    string = '[A-Z]'
+    updatedlist = [str(x) + string for x in emd_card_num]
+    separator = '|'
+    search_str = '^' + separator.join(updatedlist)
+    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
+    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude']]  
+    result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
+    timemin,timemax=timerange
+    timemin=int(timemin)
+    timemax=int(timemax)
+    if(timemin>0 or timemax<24):
+        time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
+        result = result.loc[time_condition][['alarm_datetime','latitude','longitude']]  
+    if len(datemonth)!=0:            
+            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
+            month_condition = ((result['month'].isin(datemonth)))
+            result = result.loc[month_condition][['latitude','longitude']]  
+    outputdf=result
+    return "%d incidents"%(outputdf.size)
 # %%
 @app.callback(
     Output('map-graph', 'figure'),
@@ -252,11 +285,6 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
             result = result.loc[month_condition][['latitude','longitude']]  
-            
-             
-    #return px.density_mapbox(result, lat='latitude', lon='longitude', radius=radius,
-    #                    center=dict(lat=36.16228, lon=-86.774372), zoom=10,
-    #                    mapbox_style="stamen-terrain")
     #use go.Densitymapbox(lat=quakes.Latitude, lon=quakes.Longitude, z=quakes.Magnitude,
     latInitial=36.16228
     lonInitial=-86.774372
@@ -306,27 +334,6 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
             ],
         ),
         )
-    #fig.update_layout(mapbox_style="stamen-terrain", mapbox_center_lon=-86.774372,mapbox_center_lat=36.16228)
-    #fig.update_layout(margin={"r":35,"t":0,"l":0,"b":0}, showlegend=False,zoom:10,)
-    # fig.update_layout(
-    #     title='Incident map-graph',
-    #     autosize=True,
-    #     plot_bgcolor="#1E1E1E",
-    #     paper_bgcolor="#1E1E1E",
-    #     #height=420,
-    #     margin=dict(l=0, r=35, t=0, b=0),
-    #     mapbox=go.layout.Mapbox(
-    #         accesstoken=mapbox_access_token,
-    #         style='light',
-    #         bearing=0,
-    #         center=go.layout.mapbox.Center(
-    #             lat=36.16228,
-    #             lon=-86.774372
-    #         ),
-    #         pitch=0,
-    #         zoom=10
-    #     )
-    # )
     return fig
 
 colorVal = [
