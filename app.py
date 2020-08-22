@@ -545,15 +545,19 @@ def monthhist(result,selection):
     )
 @app.callback(
     Output('histogram-text',"children"),
-    [Input("histogram-basis","value"),]
+    [Input("histogram-basis","value"),Input("date-picker", "date"),
+    Input("date-picker-end", "date"),           
+    Input("time-slider", "value")]
 )
-def updatehistogramtext(histogramkind):
+def updatehistogramtext(histogramkind,start_date,end_date,timerange):
+    outputkind=''
     if histogramkind=="month":
-        return "Histogram by month"
+        outputkind= "Histogram by month"
     elif histogramkind=="day":
-        return "Histogram by day of the week"
+        outputkind= "Histogram by day of the week"
     elif histogramkind=="hour":
-        return "Histogram by hour of the day"
+        outputkind= "Histogram by hour of the day"
+    return "Histogram by %s from %s to %s within %s:00 to %s:00 hours."%(outputkind,start_date,end_date,timerange[0],timerange[1])
 
 
 
@@ -562,9 +566,9 @@ def updatehistogramtext(histogramkind):
     Output('histogram', 'figure'),
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),
-    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value"),Input("histogram-basis","value")]
+    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value"),Input("histogram-basis","value"),Input("time-slider", "value")]
 )
-def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind):
+def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,timerange):
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
     date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
@@ -576,6 +580,13 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind)
     
     result = df.loc[date_condition & emd_card_condition][['alarm_datetime']]    
     result['alarm_datetime'] = pd.to_datetime(result['alarm_datetime'])
+    timemin,timemax=timerange
+    timemin=int(timemin)
+    timemax=int(timemax)
+    if(timemin>0 or timemax<24):
+        result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour    
+        time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
+        result = result.loc[time_condition][['alarm_datetime']]  
 
     if histogramkind=="month":
         return monthhist(result,selection)
