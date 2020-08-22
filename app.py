@@ -21,33 +21,6 @@ app = dash.Dash(__name__, server=server,meta_tags=[{"name": "viewport", "content
 
 
 
-# %%
-colorVal = [
-        "#F4EC15",
-        "#DAF017",
-        "#BBEC19",
-        "#9DE81B",
-        "#80E41D",
-        "#66E01F",
-        "#4CDC20",
-        "#34D822",
-        "#24D249",
-        "#25D042",
-        "#26CC58",
-        "#28C86D",
-        "#29C481",
-        "#2AC093",
-        "#2BBCA4",
-        "#2BB5B8",
-        "#2C99B4",
-        "#2D7EB0",
-        "#2D65AC",
-        "#2E4EA4",
-        "#2E38A4",
-        "#3B2FA0",
-        "#4E2F9C",
-        "#603099",
-    ]
 
 # %%
 
@@ -274,14 +247,28 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth):
     )
     return fig
 
+colorVal = [
+        "#2202d1",
+        "#2202d1",
+        "#2202d1",
+        "#FFFFFF",
+        "#2202d1",
+        "#2202d1",
+        "#2202d1",
+        "#2202d1",
+        "#2202d1",
+        "#2202d1",
+        "#2202d1",
+        "#2202d1",
+    ]
 # %%
 @app.callback(
     Output('histogram', 'figure'),
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),
-    Input('emd-card-num-dropdown', 'value')]
+    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value")]
 )
-def update_bar_chart(start_date, end_date, emd_card_num):
+def update_bar_chart(start_date, end_date, emd_card_num,selection):
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
     date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
@@ -296,11 +283,25 @@ def update_bar_chart(start_date, end_date, emd_card_num):
 
     result['month_year'] = result['alarm_datetime'].dt.month 
     result['month_year'] = result['month_year'].astype(str)
+    
 
     result = result.groupby(['month_year']).count().reset_index()
     result.columns = ['month', 'count']
+    result['m']=result['month'].astype(int)
+    result=result.sort_values('m')
+    #print(result)
     xVal=result['month']
     yVal=result['count']
+    
+    xSelected = [int(x) for x in selection]
+    #print (selection)
+    for i in range(12):        
+        if i+1 in xSelected:          
+            colorVal[i]= "#FFFFFF"
+        else:
+            colorVal[i]= "#2202d1"
+    #print(colorVal)        
+
     layout = go.Layout(
         bargap=0.1,
         bargroupgap=0,
@@ -344,13 +345,14 @@ def update_bar_chart(start_date, end_date, emd_card_num):
 
     return go.Figure(
         data=[
-            go.Bar(x=xVal, y=yVal  ),
+            go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
         ],
         layout=layout,
     )
 
 # %%
 if __name__ == '__main__':
-    app.server.run(threaded=True)
+	app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
+# app.server.run(threaded=True)
 
 # %%
