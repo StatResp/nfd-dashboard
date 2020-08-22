@@ -109,20 +109,6 @@ app.layout = html.Div(
 
                                     ),  
                             ],
-                        ),
-                        html.Div(
-                            className="row",
-                            children=[
-                                html.P("""Select Radius for map-graph """),
-                                dcc.Slider(
-                                            id='map-graph-radius',
-                                            min=1,
-                                            max=10,
-                                            step=0.05,
-                                            marks={i: '{}'.format(i) for i in range(1, 11)},
-                                            value=2
-                                        ),
-                            ],
                         ),                        
                         # Change to side-by-side for mobile layout
                         html.Div(
@@ -132,7 +118,7 @@ app.layout = html.Div(
                                 html.Div(
                                     className="div-for-dropdown",
                                     children=[
-                                        html.P("""Select months to filter data."""),
+                                        html.P("""Select from the list or click on histogram to filter data by month."""),
                                         # Dropdown to select times
                                         dcc.Dropdown(
                                             id="bar-selector",
@@ -156,15 +142,18 @@ app.layout = html.Div(
                 html.Div(
                     className="eight columns div-for-charts bg-grey",
                     children=[
-                        dcc.Graph(id="map-graph"),
-                        html.Div(
-                            #className="text-padding",
-                            children=[
-                                  html.P("""Select any of the bars on the histogram to filter incidents by month"""),
-                                
-                               
-                            ],
-                        ),
+                        dcc.Graph(id="map-graph"),                        
+                        html.P("""Select radius to configure heatmap"""),
+                        dcc.Slider(
+                                            id='map-graph-radius',
+                                            min=1,
+                                            max=10,
+                                            step=0.05,
+                                            marks={i: '{}'.format(i) for i in range(1, 11)},
+                                            value=2
+                                        ),
+                              
+               
                         dcc.Graph(id="histogram"),
                     ],
                 ),
@@ -229,13 +218,13 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth):
     fig.update_layout(
         title='Incident map-graph',
         autosize=True,
-        plot_bgcolor="#323130",
-        paper_bgcolor="#323130",
+        plot_bgcolor="#1E1E1E",
+        paper_bgcolor="#1E1E1E",
         #height=420,
         margin=dict(l=0, r=35, t=0, b=0),
         mapbox=go.layout.Mapbox(
             accesstoken=mapbox_access_token,
-            style='streets',
+            style='light',
             bearing=0,
             center=go.layout.mapbox.Center(
                 lat=36.16228,
@@ -308,14 +297,14 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=50),
         showlegend=False,
-        plot_bgcolor="#323130",
-        paper_bgcolor="#323130",
+        plot_bgcolor="#31302F",
+        paper_bgcolor="#31302F",
         dragmode="select",
         font=dict(color="white"),
         xaxis=dict(
             range=[0, 13],
             showgrid=False,
-            title='Month',
+            title='Month (click to filter the incidents from a specific month)',
             tickvals = [1, 2, 3,4, 5,6, 7,8, 9,10, 11,12],    
             ticktext = ['Jan','Feb', 'March', 'Apr', 'May', 'June', 'July','Aug','Sep','Oct','Nov','Dec'],      
             fixedrange=True,
