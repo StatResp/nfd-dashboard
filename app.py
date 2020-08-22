@@ -230,7 +230,7 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
 # Update the total number of rides Tag
 @app.callback(Output("heatmap-text", "children"),   [Input("date-picker", "date"),Input("date-picker-end", "date"),Input("time-slider", "value")])
 def update_total_rides(datestart,dateend,timevalue):
-    return "Incident distribution from: %s to %s within %s:00 to %s:00 hours."%(datestart,dateend,timevalue[0],timevalue[1])
+    return "Incident distribution from %s to %s within %s:00 to %s:00 hours."%(datestart,dateend,timevalue[0],timevalue[1])
     
 
 # %%
