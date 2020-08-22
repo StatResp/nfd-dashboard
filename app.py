@@ -108,6 +108,15 @@ app.layout = html.Div(
                                         value=['29', '34'],
                                         id='emd-card-num-dropdown' 
 
+                                    ),
+                                html.P("""Severity Selection""",style={'text-align': 'center'}),
+                                dcc.RadioItems( id='severity-basis',
+                                          options=[                                             
+                                              {'label': 'With Severity', 'value': 'severity'},
+                                              {'label': 'Without Severity', 'value': 'none'},
+                                              ],
+                                        labelStyle={'display': 'inline-block'} ,     
+                                        value='severity'
                                     ),                                 
                             ],
                         ),         
@@ -233,9 +242,10 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
     Input("date-picker-end", "date"),    
     Input('emd-card-num-dropdown', 'value'),
     Input("bar-selector", "value"),
-    Input("time-slider", "value")]
+    Input("time-slider", "value"),  Input("severity-basis", "value")
+    ]
 )
-def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange):
+def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,severity):
   
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)        
@@ -257,8 +267,27 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange):
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
             result = result.loc[month_condition][['latitude','longitude']]   
-    return "Incident distribution from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
+    if 'severity' in severity:
+        return "Incident distribution (with severity from 1 to 5) from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
+    else:
+        return "Incident distribution from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
   
+def transform_severity(emdCardNumber):
+    if 'A' in emdCardNumber:
+         return 2
+    elif 'B' in emdCardNumber:
+         return 3
+    elif 'C' in emdCardNumber:
+         return 4
+    elif 'D' in emdCardNumber:
+         return 5
+    elif 'E' in emdCardNumber:
+         return 6
+    elif 'Ω' in emdCardNumber:
+         return 1
+    else:
+         return 0
+    
 # %%
 @app.callback(
     Output('map-graph', 'figure'),
@@ -267,9 +296,9 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange):
     Input("map-graph-radius", "value"),
     Input('emd-card-num-dropdown', 'value'),
     Input("bar-selector", "value"),
-    Input("time-slider", "value")]
+    Input("time-slider", "value"), Input("severity-basis", "value")]
 )
-def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange):
+def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange,severity):
   
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)        
@@ -279,67 +308,117 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
     emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude']]  
+    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude','emdCardNumber']]  
     result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
+    result['severity']=result['emdCardNumber'].apply(lambda x: transform_severity(x))
     timemin,timemax=timerange
     timemin=int(timemin)
     timemax=int(timemax)
     if(timemin>0 or timemax<24):
         time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
-        result = result.loc[time_condition][['alarm_datetime','latitude','longitude']]  
+        result = result.loc[time_condition][['alarm_datetime','latitude','longitude','severity']]  
     if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['latitude','longitude']]  
+            result = result.loc[month_condition][['latitude','longitude','severity']]  
     #use go.Densitymapbox(lat=quakes.Latitude, lon=quakes.Longitude, z=quakes.Magnitude,
     latInitial=36.16228
     lonInitial=-86.774372
-    fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],radius=radius),layout=Layout(
-            autosize=True,
-            margin=go.layout.Margin(l=0, r=35, t=0, b=0),
-            showlegend=False,
-            mapbox=dict(
-                accesstoken=mapbox_access_token,
-                center=dict(lat=latInitial, lon=lonInitial),  # 40.7272  # -73.991251
-                style="light",
-                bearing=0,
-                zoom=10,
-            ),
-            updatemenus=[
-                dict(
-                    buttons=(
-                        [
-                            dict(
-                                args=[
-                                    {
-                                        "mapbox.zoom": 10,
-                                        "mapbox.center.lon": lonInitial,
-                                        "mapbox.center.lat": latInitial,
-                                        "mapbox.bearing": 0,
-                                        "mapbox.style": "light",
-                                    }
-                                ],
-                                label="Reset Zoom",
-                                method="relayout",
-                            )
-                        ]
+    
+    if 'severity' in severity:
+        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],z=result['severity'],radius=radius),layout=Layout(
+                autosize=True,
+                margin=go.layout.Margin(l=0, r=35, t=0, b=0),
+                showlegend=False,
+                mapbox=dict(
+                    accesstoken=mapbox_access_token,
+                    center=dict(lat=latInitial, lon=lonInitial),  # 40.7272  # -73.991251
+                    style="light",
+                    bearing=0,
+                    zoom=10,
+                ),
+                updatemenus=[
+                    dict(
+                        buttons=(
+                            [
+                                dict(
+                                    args=[
+                                        {
+                                            "mapbox.zoom": 10,
+                                            "mapbox.center.lon": lonInitial,
+                                            "mapbox.center.lat": latInitial,
+                                            "mapbox.bearing": 0,
+                                            "mapbox.style": "light",
+                                        }
+                                    ],
+                                    label="Reset Zoom",
+                                    method="relayout",
+                                )
+                            ]
+                        ),
+                        direction="left",
+                        pad={"r": 0, "t": 0, "b": 0, "l": 0},
+                        showactive=False,
+                        type="buttons",
+                        x=0.45,
+                        y=0.02,
+                        xanchor="left",
+                        yanchor="bottom",
+                        bgcolor="#1E1E1E",                    
+                        borderwidth=1,
+                        bordercolor="#6d6d6d",
+                        font=dict(color="#FFFFFF"),
                     ),
-                    direction="left",
-                    pad={"r": 0, "t": 0, "b": 0, "l": 0},
-                    showactive=False,
-                    type="buttons",
-                    x=0.45,
-                    y=0.02,
-                    xanchor="left",
-                    yanchor="bottom",
-                    bgcolor="#1E1E1E",                    
-                    borderwidth=1,
-                    bordercolor="#6d6d6d",
-                    font=dict(color="#FFFFFF"),
-                )
-            ],
-        ),
-        )
+                ],
+            ),
+            )
+    else:
+        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],radius=radius),layout=Layout(
+                autosize=True,
+                margin=go.layout.Margin(l=0, r=35, t=0, b=0),
+                showlegend=False,
+                mapbox=dict(
+                    accesstoken=mapbox_access_token,
+                    center=dict(lat=latInitial, lon=lonInitial),  # 40.7272  # -73.991251
+                    style="light",
+                    bearing=0,
+                    zoom=10,
+                ),
+                updatemenus=[
+                    dict(
+                        buttons=(
+                            [
+                                dict(
+                                    args=[
+                                        {
+                                            "mapbox.zoom": 10,
+                                            "mapbox.center.lon": lonInitial,
+                                            "mapbox.center.lat": latInitial,
+                                            "mapbox.bearing": 0,
+                                            "mapbox.style": "light",
+                                        }
+                                    ],
+                                    label="Reset Zoom",
+                                    method="relayout",
+                                )
+                            ]
+                        ),
+                        direction="left",
+                        pad={"r": 0, "t": 0, "b": 0, "l": 0},
+                        showactive=False,
+                        type="buttons",
+                        x=0.45,
+                        y=0.02,
+                        xanchor="left",
+                        yanchor="bottom",
+                        bgcolor="#1E1E1E",                    
+                        borderwidth=1,
+                        bordercolor="#6d6d6d",
+                        font=dict(color="#FFFFFF"),
+                    ),
+                ],
+            ),
+            )
     return fig
 
 colorVal = ["#2202d1"]*25
