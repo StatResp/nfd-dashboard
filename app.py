@@ -119,7 +119,7 @@ app.layout = html.Div(
                                 html.Div(
                                     className="div-for-dropdown",
                                     children=[
-                                        html.P("""Select from the list or click on histogram to filter data by month.""",style={'text-align': 'center'}),
+                                        html.P("""Select from the list to filter data by month.""",style={'text-align': 'center'}),
                                         # Dropdown to select times
                                         dcc.Checklist(
                                             id="bar-selector",
@@ -157,10 +157,22 @@ app.layout = html.Div(
                                         marks={i: '{}:00'.format(str(i).zfill(2)) for i in range(0, 25,4)},
                                     ),
                                     ]
+                                    ),
+                                html.Div(className="div-for-dropdown",
+                                    children=[
+                                    html.P("""Select histogram Basis""",style={'text-align': 'center'}),
+                                    dcc.RadioItems( id='histogram-basis',
+                                          options=[                                             
+                                              {'label': 'By Month', 'value': 'month'},
+                                              {'label': 'By Day', 'value': 'day'},
+                                              {'label': 'By Hour', 'value': 'hour'}],
+                                        labelStyle={'display': 'inline-block'} ,     
+                                        value='month'
+                                    ),
+                                    ]
                                     ), 
                                 html.Div(
-                                    className="div-for-dropdown",
-                                    
+                                    className="div-for-dropdown",                                    
                                     children=[
                                         html.P('Select radius to configure heatmap',style={'text-align': 'center'}),
                                         dcc.Slider(
@@ -184,8 +196,8 @@ app.layout = html.Div(
                     className="eight columns div-for-charts bg-grey",
                     children=[           
                          html.P(id='heatmap-text',style={'text-align': 'center','padding-top':'20px'}),               
-                        dcc.Graph(id="map-graph"),
-                        html.P('Click on a month in the histogram below to filter data',id='histogram-text',style={'text-align': 'center','padding-top':'20px'}),                        
+                        dcc.Graph(id="map-graph"),                       
+                        html.P('Histogram by Month',id='histogram-text',style={'text-align': 'center','padding-top':'20px'}),                                                
                         dcc.Graph(id="histogram"),
                     ],
                 ),
@@ -198,18 +210,19 @@ app.layout = html.Div(
 
 # %%
 # Selected Data in the Histogram updates the Values in the DatePicker
-@app.callback(
-    Output("bar-selector", "value"),
-    [Input("histogram", "selectedData"), Input("histogram", "clickData")],
-)
-def update_bar_selector(value, clickData):
-    holder = []
-    if clickData:
-        holder.append(str(int(clickData["points"][0]["x"])))
-    if value:
-        for x in value["points"]:
-            holder.append(str(int(x["x"])))
-    return list(set(holder))
+# @app.callback(
+#     Output("bar-selector", "value"),
+#     [Input("histogram", "selectedData"), Input("histogram", "clickData"),Input("histogram-basis","value")],
+# )
+# def update_bar_selector(value, clickData,histogramkind):
+#     holder = []
+#     if(histogramkind=="month"):
+#         if clickData:
+#             holder.append(str(int(clickData["points"][0]["x"])))
+#         if value:
+#             for x in value["points"]:
+#                 holder.append(str(int(x["x"])))
+#     return list(set(holder))
 
 # %%
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
@@ -240,7 +253,7 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange):
     if(timemin>0 or timemax<24):
         time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
         result = result.loc[time_condition][['alarm_datetime','latitude','longitude']]  
-    if len(datemonth)!=0:            
+    if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
             result = result.loc[month_condition][['latitude','longitude']]   
@@ -274,7 +287,7 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     if(timemin>0 or timemax<24):
         time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
         result = result.loc[time_condition][['alarm_datetime','latitude','longitude']]  
-    if len(datemonth)!=0:            
+    if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
             result = result.loc[month_condition][['latitude','longitude']]  
@@ -329,40 +342,134 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
         )
     return fig
 
-colorVal = [
-        "#2202d1",
-        "#2202d1",
-        "#2202d1",
-        "#FFFFFF",
-        "#2202d1",
-        "#2202d1",
-        "#2202d1",
-        "#2202d1",
-        "#2202d1",
-        "#2202d1",
-        "#2202d1",
-        "#2202d1",
-    ]
-# %%
-@app.callback(
-    Output('histogram', 'figure'),
-    [Input("date-picker", "date"),
-    Input("date-picker-end", "date"),
-    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value")]
-)
-def update_bar_chart(start_date, end_date, emd_card_num,selection):
-    if '1002' in emd_card_num:
-        emd_card_num=range(1,136)
-    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
-    string = '[A-Z]'
-    updatedlist = [str(x) + string for x in emd_card_num]
-    separator = '|'
-    search_str = '^' + separator.join(updatedlist)
-    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime']]    
-    result['alarm_datetime'] = pd.to_datetime(result['alarm_datetime'])
+colorVal = ["#2202d1"]*25
 
+def hourhist(result,datemonth):
+    if datemonth is not None and len(datemonth)!=0:            
+            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
+            month_condition = ((result['month'].isin(datemonth)))
+            result = result.loc[month_condition][['alarm_datetime']]              
+    result['hour'] = result['alarm_datetime'].dt.hour 
+    result = result.groupby(['hour']).count().reset_index()
+    result.columns = ['hour', 'count']
+    hourindex = range(0,24)
+    result=result.reindex(hourindex,fill_value=0)
+    #print(result.index)
+    #print(result)
+    xVal=result['hour']
+    yVal=result['count']
+    layout = go.Layout(
+        bargap=0.05,
+        autosize=True,
+        bargroupgap=0,
+        barmode="group",
+        margin=go.layout.Margin(l=10, r=0, t=0, b=50),
+        showlegend=False,
+        plot_bgcolor="#31302F",
+        paper_bgcolor="#31302F",
+        dragmode="select",
+        font=dict(color="white"),
+        xaxis=dict(
+            range=[-1, 25],
+            showgrid=False,           
+            tickvals = [ x for x in range(0,24)],       
+            ticktext = ['12 AM','1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM','7 AM','8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
+             '3 PM', '4 PM', '5 PM', '6 PM','7 PM','8 PM', '9 PM', '10 PM', '11 PM'],           
+            fixedrange=True,
+            ticksuffix="",
+        ),
+        yaxis=dict(
+            range=[0, max(yVal) + max(yVal) / 4],
+            showticklabels=False,
+            showgrid=False,
+            fixedrange=True,
+            rangemode="nonnegative",
+            zeroline=False,
+        ),
+        annotations=[
+            dict(
+                x=xi,
+                y=yi,
+                text=str(yi),
+                xanchor="center",
+                yanchor="bottom",
+                showarrow=False,
+                font=dict(color="white"),
+            )
+            for xi, yi in zip(xVal, yVal)
+        ],
+    )
+
+    return go.Figure(
+        data=[
+            go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+        ],
+        layout=layout,
+    )
+
+def dayhist(result,datemonth):
+    if datemonth is not None and len(datemonth)!=0:            
+            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
+            month_condition = ((result['month'].isin(datemonth)))
+            result = result.loc[month_condition][['alarm_datetime']]              
+    result['dayofweek'] = result['alarm_datetime'].dt.dayofweek 
+    result = result.groupby(['dayofweek']).count().reset_index()
+    result.columns = ['dayofweek', 'count']
+    dayindex = range(0,7)
+    result=result.reindex(dayindex,fill_value=0)
+    #print(result.index)
+    #print(result)
+    xVal=result['dayofweek']
+    yVal=result['count']
+    layout = go.Layout(
+        bargap=0.05,
+        autosize=True,
+        bargroupgap=0,
+        barmode="group",
+        margin=go.layout.Margin(l=10, r=0, t=0, b=50),
+        showlegend=False,
+        plot_bgcolor="#31302F",
+        paper_bgcolor="#31302F",
+        dragmode="select",
+        font=dict(color="white"),
+        xaxis=dict(
+            range=[-1, 8],
+            showgrid=False,           
+            tickvals = [0,1, 2, 3,4, 5,6],    
+            ticktext = ['Mon','Tues', 'Wed', 'Thur', 'Friday', 'Sat', 'Sun'],      
+            fixedrange=True,
+            ticksuffix="",
+        ),
+        yaxis=dict(
+            range=[0, max(yVal) + max(yVal) / 4],
+            showticklabels=False,
+            showgrid=False,
+            fixedrange=True,
+            rangemode="nonnegative",
+            zeroline=False,
+        ),
+        annotations=[
+            dict(
+                x=xi,
+                y=yi,
+                text=str(yi),
+                xanchor="center",
+                yanchor="bottom",
+                showarrow=False,
+                font=dict(color="white"),
+            )
+            for xi, yi in zip(xVal, yVal)
+        ],
+    )
+
+    return go.Figure(
+        data=[
+            go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+        ],
+        layout=layout,
+    )
+
+def monthhist(result,selection):
     result['month_year'] = result['alarm_datetime'].dt.month 
     result['month_year'] = result['month_year'].astype(str)
     
@@ -378,14 +485,16 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection):
     #print(result)
     xVal=result['month']
     yVal=result['count']
-    
-    xSelected = [int(x) for x in selection]
-    #print (selection)
-    for i in range(12):        
-        if i+1 in xSelected:          
-            colorVal[i]= "#FFFFFF"
-        else:
-            colorVal[i]= "#2202d1"
+
+    if selection is not None:        
+        xSelected = [int(x) for x in selection]
+        #print (selection)
+        for i in range(12):        
+            if i+1 in xSelected: 
+                #print ("setting to white " + str(i))         
+                colorVal[i]= "#FFFFFF"
+            else:
+                colorVal[i]= "#2202d1"
     #print(colorVal)        
 
     layout = go.Layout(
@@ -434,10 +543,52 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection):
         ],
         layout=layout,
     )
+@app.callback(
+    Output('histogram-text',"children"),
+    [Input("histogram-basis","value"),]
+)
+def updatehistogramtext(histogramkind):
+    if histogramkind=="month":
+        return "Histogram by month"
+    elif histogramkind=="day":
+        return "Histogram by day of the week"
+    elif histogramkind=="hour":
+        return "Histogram by hour of the day"
+
+
+
+# %%
+@app.callback(
+    Output('histogram', 'figure'),
+    [Input("date-picker", "date"),
+    Input("date-picker-end", "date"),
+    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value"),Input("histogram-basis","value")]
+)
+def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind):
+    if '1002' in emd_card_num:
+        emd_card_num=range(1,136)
+    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
+    string = '[A-Z]'
+    updatedlist = [str(x) + string for x in emd_card_num]
+    separator = '|'
+    search_str = '^' + separator.join(updatedlist)
+    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
+    
+    result = df.loc[date_condition & emd_card_condition][['alarm_datetime']]    
+    result['alarm_datetime'] = pd.to_datetime(result['alarm_datetime'])
+
+    if histogramkind=="month":
+        return monthhist(result,selection)
+    elif histogramkind=="day":
+        return dayhist(result,selection)
+    elif histogramkind=="hour":
+        return hourhist(result,selection)
+
+   
 
 # %%
 if __name__ == '__main__':
-	app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
-    	#app.server.run(threaded=True)
+	#app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
+    app.server.run(threaded=True)
 
 # %%
