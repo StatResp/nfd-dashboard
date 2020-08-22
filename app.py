@@ -88,7 +88,7 @@ app.layout = html.Div(
                         html.Div(
                             className="div-for-dropdown",
                             children=[
-                                html.P("""Select different incident categories"""),
+                                html.P("""Select incident categories""",style={'text-align': 'center'}),
                                 dcc.Checklist(
                                         options=[
                                               {'label': 'All', 'value': '1002'},
@@ -107,53 +107,98 @@ app.layout = html.Div(
                                         value=['29', '34'],
                                         id='emd-card-num-dropdown' 
 
-                                    ),  
+                                    ),                                 
                             ],
-                        ),                        
+                        ),         
+
                         # Change to side-by-side for mobile layout
                         html.Div(
                             className="row",
                             children=[
-                                
                                 html.Div(
                                     className="div-for-dropdown",
                                     children=[
-                                        html.P("""Select from the list or click on histogram to filter data by month."""),
+                                        html.P("""Select from the list or click on histogram to filter data by month.""",style={'text-align': 'center'}),
                                         # Dropdown to select times
-                                        dcc.Dropdown(
+                                        dcc.Checklist(
                                             id="bar-selector",
                                             options=[
-                                                {
-                                                    "label": str(n),
-                                                    "value": str(n),
-                                                }
-                                                for n in range(1,13)
+                                                
+                                                    {'label': 'Jan', 'value': '1'},
+                                                    {'label': 'Feb', 'value': '2'},
+                                                    {'label': 'Mar', 'value': '3'},
+                                                    {'label': 'Apr', 'value': '4'},
+                                                    {'label': 'May', 'value': '5'},
+                                                    {'label': 'June', 'value': '6'},
+                                                    {'label': 'July', 'value': '7'},
+                                                    {'label': 'Aug', 'value': '8'},
+                                                    {'label': 'Sep', 'value': '9'},
+                                                    {'label': 'Oct', 'value': '10'},
+                                                    {'label': 'Nov', 'value': '11'},
+                                                    {'label': 'Dec', 'value': '11'},
+                                                
+                                                
                                             ],
-                                            multi=True,                                            
+                                            
+                                            labelStyle={'display': 'inline-block'}                                         
                                         )
                                     ],
                                 ),
+                                html.Div(className="div-for-dropdown",
+                                    children=[
+                                    html.P("""Select Time Range""",style={'text-align': 'center'}),
+                                    dcc.RangeSlider(
+                                        id='time-slider',
+                                        min=0,
+                                        max=24,
+                                        step=1,
+                                        value=[0, 24],
+                                        marks={
+                                            0: '12 AM',
+                                            2: '2 AM',
+                                            4: '4 AM',
+                                            6: '6 AM',
+                                            8: '8 AM',
+                                            10: '10 AM',
+                                            12: '12 PM',
+                                            14: '2 PM',
+                                            16: '4 PM',
+                                            18: '6 PM',
+                                            20: '8 PM',
+                                            22: '10 PM',
+                                            24: '12 AM',                                        
+                                        },
+                                    ),
+                                    ]
+                                    ), 
+                                html.Div(
+                                    className="div-for-dropdown",
+                                    
+                                    children=[
+                                        html.P('Select radius to configure heatmap',style={'text-align': 'center'}),
+                                        dcc.Slider(
+                                                    id='map-graph-radius',
+                                                    min=1,
+                                                    max=10,
+                                                    step=0.05,
+                                                    marks={i: '{}'.format(i) for i in range(1, 11)},
+                                                    value=2
+                                                ),
+                                    ]
+                                )
                             ],
                         ),
+                        
                         
                     ],
                 ),
                 # Column for app graphs and plots
                 html.Div(
                     className="eight columns div-for-charts bg-grey",
-                    children=[
-                        dcc.Graph(id="map-graph"),                        
-                        html.P("""Select radius to configure heatmap"""),
-                        dcc.Slider(
-                                            id='map-graph-radius',
-                                            min=1,
-                                            max=10,
-                                            step=0.05,
-                                            marks={i: '{}'.format(i) for i in range(1, 11)},
-                                            value=2
-                                        ),
-                              
-               
+                    children=[           
+                         html.P(id='heatmap-text',style={'text-align': 'center','padding-top':'20px'}),               
+                        dcc.Graph(id="map-graph"),
+                        html.P('Click on a month in the histogram below to filter data',id='histogram-text',style={'text-align': 'center','padding-top':'20px'}),                        
                         dcc.Graph(id="histogram"),
                     ],
                 ),
@@ -182,6 +227,12 @@ def update_bar_selector(value, clickData):
 # %%
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 
+# Update the total number of rides Tag
+@app.callback(Output("heatmap-text", "children"),   [Input("date-picker", "date"),Input("date-picker-end", "date"),Input("time-slider", "value")])
+def update_total_rides(datestart,dateend,timevalue):
+    return "Incident distribution from: %s to %s within %s:00 to %s:00 hours."%(datestart,dateend,timevalue[0],timevalue[1])
+    
+
 # %%
 @app.callback(
     Output('map-graph', 'figure'),
@@ -189,9 +240,11 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
     Input("date-picker-end", "date"),
     Input("map-graph-radius", "value"),
     Input('emd-card-num-dropdown', 'value'),
-    Input("bar-selector", "value")]
+    Input("bar-selector", "value"),
+    Input("time-slider", "value")]
 )
-def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth):
+def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange):
+  
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)        
     date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
@@ -201,7 +254,13 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth):
     search_str = '^' + separator.join(updatedlist)
     emd_card_condition = (df.emdCardNumber.str.contains(search_str))
     result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude']]  
-    
+    result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
+    timemin,timemax=timerange
+    timemin=int(timemin)
+    timemax=int(timemax)
+    if(timemin>0 or timemax<24):
+        time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
+        result = result.loc[time_condition][['alarm_datetime','latitude','longitude']]  
     if len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
@@ -212,28 +271,75 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth):
     #                    center=dict(lat=36.16228, lon=-86.774372), zoom=10,
     #                    mapbox_style="stamen-terrain")
     #use go.Densitymapbox(lat=quakes.Latitude, lon=quakes.Longitude, z=quakes.Magnitude,
-    fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],radius=radius))
+    latInitial=36.16228
+    lonInitial=-86.774372
+    fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],radius=radius),layout=Layout(
+            autosize=True,
+            margin=go.layout.Margin(l=0, r=35, t=0, b=0),
+            showlegend=False,
+            mapbox=dict(
+                accesstoken=mapbox_access_token,
+                center=dict(lat=latInitial, lon=lonInitial),  # 40.7272  # -73.991251
+                style="light",
+                bearing=0,
+                zoom=10,
+            ),
+            updatemenus=[
+                dict(
+                    buttons=(
+                        [
+                            dict(
+                                args=[
+                                    {
+                                        "mapbox.zoom": 10,
+                                        "mapbox.center.lon": lonInitial,
+                                        "mapbox.center.lat": latInitial,
+                                        "mapbox.bearing": 0,
+                                        "mapbox.style": "light",
+                                    }
+                                ],
+                                label="Reset Zoom",
+                                method="relayout",
+                            )
+                        ]
+                    ),
+                    direction="left",
+                    pad={"r": 0, "t": 0, "b": 0, "l": 0},
+                    showactive=False,
+                    type="buttons",
+                    x=0.45,
+                    y=0.02,
+                    xanchor="left",
+                    yanchor="bottom",
+                    bgcolor="#1E1E1E",                    
+                    borderwidth=1,
+                    bordercolor="#6d6d6d",
+                    font=dict(color="#FFFFFF"),
+                )
+            ],
+        ),
+        )
     #fig.update_layout(mapbox_style="stamen-terrain", mapbox_center_lon=-86.774372,mapbox_center_lat=36.16228)
     #fig.update_layout(margin={"r":35,"t":0,"l":0,"b":0}, showlegend=False,zoom:10,)
-    fig.update_layout(
-        title='Incident map-graph',
-        autosize=True,
-        plot_bgcolor="#1E1E1E",
-        paper_bgcolor="#1E1E1E",
-        #height=420,
-        margin=dict(l=0, r=35, t=0, b=0),
-        mapbox=go.layout.Mapbox(
-            accesstoken=mapbox_access_token,
-            style='light',
-            bearing=0,
-            center=go.layout.mapbox.Center(
-                lat=36.16228,
-                lon=-86.774372
-            ),
-            pitch=0,
-            zoom=10
-        )
-    )
+    # fig.update_layout(
+    #     title='Incident map-graph',
+    #     autosize=True,
+    #     plot_bgcolor="#1E1E1E",
+    #     paper_bgcolor="#1E1E1E",
+    #     #height=420,
+    #     margin=dict(l=0, r=35, t=0, b=0),
+    #     mapbox=go.layout.Mapbox(
+    #         accesstoken=mapbox_access_token,
+    #         style='light',
+    #         bearing=0,
+    #         center=go.layout.mapbox.Center(
+    #             lat=36.16228,
+    #             lon=-86.774372
+    #         ),
+    #         pitch=0,
+    #         zoom=10
+    #     )
+    # )
     return fig
 
 colorVal = [
@@ -303,8 +409,7 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection):
         font=dict(color="white"),
         xaxis=dict(
             range=[0, 13],
-            showgrid=False,
-            title='Month (click to filter the incidents from a specific month)',
+            showgrid=False,           
             tickvals = [1, 2, 3,4, 5,6, 7,8, 9,10, 11,12],    
             ticktext = ['Jan','Feb', 'March', 'Apr', 'May', 'June', 'July','Aug','Sep','Oct','Nov','Dec'],      
             fixedrange=True,
