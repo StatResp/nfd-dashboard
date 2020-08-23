@@ -41,12 +41,6 @@ a {
 #histogram {
   flex-grow: 1 
 }
-#dayhistogram {
-  flex-grow: 1 
-}
-#hourhistogram {
-  flex-grow: 1 
-}
 #map-graph {
   flex-grow: 1 
 }
