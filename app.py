@@ -202,6 +202,8 @@ app.layout = html.Div(
                         #html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'center'})]),                       
                         html.P('Histogram by Month',id='heatmap-text',style={'text-align': 'center'}),                                                
                         dcc.Graph(id="histogram"),
+                        dcc.Graph(id="dayhistogram"),
+                        dcc.Graph(id="hourhistogram"),
                     ],
                 ),
             ],
@@ -218,64 +220,14 @@ app.layout = html.Div(
 
 
 
-# %%
-# Selected Data in the Histogram updates the Values in the DatePicker
-# @app.callback(
-#     Output("bar-selector", "value"),
-#     [Input("histogram", "selectedData"), Input("histogram", "clickData"),Input("histogram-basis","value")],
-# )
-# def update_bar_selector(value, clickData,histogramkind):
-#     holder = []
-#     if(histogramkind=="month"):
-#         if clickData:
-#             holder.append(str(int(clickData["points"][0]["x"])))
-#         if value:
-#             for x in value["points"]:
-#                 holder.append(str(int(x["x"])))
-#     return list(set(holder))
+
 
 # %%
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 
-@app.callback(
-    Output('heatmap-text', "children"),
-    [Input("date-picker", "date"),
-    Input("date-picker-end", "date"),    
-    Input('emd-card-num-dropdown', 'value'),
-    Input("bar-selector", "value"),
-    Input("time-slider", "value"),  Input("severity-basis", "value")
-    ]
-)
-def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,severity):
-  
-    if '1002' in emd_card_num:
-        emd_card_num=range(1,136)
-    elif '29' in emd_card_num:
-        emd_card_num.append('34')        
-    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
-    string = '[A-Z]'
-    updatedlist = [str(x) + string for x in emd_card_num]
-    separator = '|'
-    search_str = '^' + separator.join(updatedlist)
-    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude']]  
-    result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
-    timemin,timemax=timerange
-    timemin=int(timemin)
-    timemax=int(timemax)
-    if(timemin>0 or timemax<24):
-        time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
-        result = result.loc[time_condition][['alarm_datetime','latitude','longitude']]  
-    if datemonth is not None and len(datemonth)!=0:            
-            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
-            month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['latitude','longitude']]   
-    # if 'severity' in severity:
-    #    return "Incident distribution (with severity from 1 to 5) from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
-    #else:
-    return "Showing %d incidents from %s to %s within %s:00 to %s:00 hours. "%(result.size,start_date,end_date,timerange[0],timerange[1])
-  
-def transform_severity(emdCardNumber):
+def transform_severity(emdCardNumber,severity):
+    if 'severity' in severity:
+        return 1
     if 'A' in emdCardNumber:
          return 2
     elif 'B' in emdCardNumber:
@@ -290,10 +242,10 @@ def transform_severity(emdCardNumber):
          return 1
     else:
          return 0
-    
+colorVal = ["#2202d1"]*25    
 # %%
 @app.callback(
-    Output('map-graph', 'figure'),
+    [Output('map-graph', 'figure'),Output('heatmap-text', "children"),Output('histogram', 'figure'),Output('dayhistogram', 'figure'),Output('hourhistogram', 'figure')],
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),
     Input("map-graph-radius", "value"),
@@ -302,6 +254,7 @@ def transform_severity(emdCardNumber):
     Input("time-slider", "value"), Input("severity-basis", "value")]
 )
 def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange,severity):
+    colorVal = ["#2202d1"]*25
   
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
@@ -313,25 +266,199 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
     emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude','emdCardNumber']]  
-    result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
-    result['severity']=result['emdCardNumber'].apply(lambda x: transform_severity(x))
+    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude','emdCardNumber']] 
+    result['severity']=result['emdCardNumber'].apply(lambda x: transform_severity(x,severity))
+    #filter by time.
     timemin,timemax=timerange
     timemin=int(timemin)
     timemax=int(timemax)
+
+    result['alarm_datetime']=pd.to_datetime(result['alarm_datetime'])
+    result['hour'] = (result['alarm_datetime']).dt.hour
+    result['dayofweek'] = result['alarm_datetime'].dt.dayofweek 
+    result['month'] = result['alarm_datetime'].dt.month 
+    
+    #print(result.head())
+
     if(timemin>0 or timemax<24):
         time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
-        result = result.loc[time_condition][['alarm_datetime','latitude','longitude','severity']]  
-    if datemonth is not None and len(datemonth)!=0:            
-            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
+        result = result.loc[time_condition]
+    if datemonth is not None and len(datemonth)!=0:                       
             month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['latitude','longitude','severity']]  
+            result = result.loc[month_condition]
+    
+     
+    #compute hour distribution
+    #hourresult=result.drop(['latitude','longitude','severity','month','dayofweek'])
+    hourresult = result.groupby(['hour']).count().reset_index()
+    #print(hourresult.head())
+    hourresult.columns = ['hour', 'count','a','b','c','d','e','f']
+    hourindex = range(0,24)
+    hourresult=hourresult.reindex(hourindex,fill_value=0)
+    hourresult.sort_index()
+    #print(hourresult.head())
+
+    #compute dayofweek distribution
+    #dayofweekresult =result.drop(['latitude','longitude','severity','month','hour'])
+    dayofweekresult = result.groupby(['dayofweek']).count().reset_index()
+    dayofweekresult.columns = ['dayofweek', 'count','a','b','c','d','e','f']
+    dayindex = range(0,7)
+    dayofweekresult=dayofweekresult.reindex(dayindex,fill_value=0)
+    dayofweekresult.sort_index()
+
+    #compute month distribution
+    #monthresult =result.drop(['latitude','longitude','severity','dayofweek','hour'])
+    monthresult = result.groupby(['month']).count().reset_index()
+    monthresult.columns = ['month', 'count','a','b','c','d','e','f']
+    monthindex = range(0,12)
+    monthresult=monthresult.reindex(monthindex,fill_value=0)
+    monthresult.sort_index()
+
+    
+    hourfig=go.Figure(
+        data=[
+            go.Bar(x=hourresult['hour'], y=hourresult['count'],marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+        ],
+        layout=go.Layout(
+                        bargap=0.05,
+                        autosize=True,
+                        bargroupgap=0,
+                        barmode="group",
+                        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+                        showlegend=False,
+                        plot_bgcolor="#31302F",
+                        paper_bgcolor="#31302F",
+                        dragmode="select",
+                        font=dict(color="white"),
+                        xaxis=dict(
+                            range=[-1, 25],
+                            showgrid=False,           
+                            tickvals = [ x for x in range(0,24)],       
+                            ticktext = ['12 AM','1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM','7 AM','8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
+                            '3 PM', '4 PM', '5 PM', '6 PM','7 PM','8 PM', '9 PM', '10 PM', '11 PM'],           
+                            fixedrange=True,
+                            ticksuffix="",
+                        ),
+                        yaxis=dict(
+                            range=[0, max(hourresult['count']) + max(hourresult['count']) / 4],
+                            showticklabels=False,
+                            showgrid=False,
+                            fixedrange=True,
+                            rangemode="nonnegative",
+                            zeroline=False,
+                        ),
+                        annotations=[
+                            dict(
+                                x=xi,
+                                y=yi,
+                                text=str(yi),
+                                xanchor="center",
+                                yanchor="bottom",
+                                showarrow=False,
+                                font=dict(color="white"),
+                            )
+                            for xi, yi in zip(hourresult['hour'], hourresult['count'])
+                        ],
+                    ),
+    )
+
+    dayfig=go.Figure(
+        data=[
+            go.Bar(x=dayofweekresult['dayofweek'], y=dayofweekresult['count'],marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+        ],
+        layout=go.Layout(
+                        bargap=0.05,
+                        autosize=True,
+                        bargroupgap=0,
+                        barmode="group",
+                        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+                        showlegend=False,
+                        plot_bgcolor="#31302F",
+                        paper_bgcolor="#31302F",
+                        dragmode="select",
+                        font=dict(color="white"),
+                        xaxis=dict(
+                            range=[-1, 8],
+                            showgrid=False,           
+                            tickvals = [0,1, 2, 3,4, 5,6],    
+                            ticktext = ['Mon','Tues', 'Wed', 'Thur', 'Friday', 'Sat', 'Sun'],      
+                            fixedrange=True,
+                            ticksuffix="",
+                        ),
+                        yaxis=dict(
+                            range=[0, max(dayofweekresult['count']) + max(dayofweekresult['count']) / 4],
+                            showticklabels=False,
+                            showgrid=False,
+                            fixedrange=True,
+                            rangemode="nonnegative",
+                            zeroline=False,
+                        ),
+                        annotations=[
+                            dict(
+                                x=xi,
+                                y=yi,
+                                text=str(yi),
+                                xanchor="center",
+                                yanchor="bottom",
+                                showarrow=False,
+                                font=dict(color="white"),
+                            )
+                            for xi, yi in zip(dayofweekresult['dayofweek'], dayofweekresult['count'])
+                        ],
+                    ),
+    )
+
+    monthfig=go.Figure(
+        data=[
+            go.Bar(x=monthresult['month'], y=monthresult['count'],marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+        ],
+        layout=go.Layout(
+                        bargap=0.05,
+                        autosize=True,
+                        bargroupgap=0,
+                        barmode="group",
+                        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+                        showlegend=False,
+                        plot_bgcolor="#31302F",
+                        paper_bgcolor="#31302F",
+                        dragmode="select",
+                        font=dict(color="white"),
+                        xaxis=dict(
+                            range=[0, 13],
+                            showgrid=False,           
+                            tickvals = [1, 2, 3,4, 5,6, 7,8, 9,10, 11,12],    
+                            ticktext = ['Jan','Feb', 'March', 'Apr', 'May', 'June', 'July','Aug','Sep','Oct','Nov','Dec'],      
+                            fixedrange=True,
+                            ticksuffix="",
+                        ),
+                        yaxis=dict(
+                            range=[0, max(monthresult['count']) + max(monthresult['count']) / 4],
+                            showticklabels=False,
+                            showgrid=False,
+                            fixedrange=True,
+                            rangemode="nonnegative",
+                            zeroline=False,
+                        ),
+                        annotations=[
+                            dict(
+                                x=xi,
+                                y=yi,
+                                text=str(yi),
+                                xanchor="center",
+                                yanchor="bottom",
+                                showarrow=False,
+                                font=dict(color="white"),
+                            )
+                            for xi, yi in zip(monthresult['month'], monthresult['count'])
+                        ],
+                    ),
+    )
+    
     #use go.Densitymapbox(lat=quakes.Latitude, lon=quakes.Longitude, z=quakes.Magnitude,
     latInitial=36.16228
     lonInitial=-86.774372
-    
-    if 'severity' in severity:
-        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],z=result['severity'],radius=radius),layout=Layout(
+    outputstring="Showing %d incidents from %s to %s within %s:00 to %s:00 hours. "%(result.size,start_date,end_date,timerange[0],timerange[1])
+    mapfig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],z=result['severity'],radius=radius),layout=Layout(
                 autosize=True,
                 margin=go.layout.Margin(l=0, r=35, t=0, b=0),
                 showlegend=False,
@@ -377,315 +504,231 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
                 ],
             ),
             )
-    else:
-        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],radius=radius),layout=Layout(
-                autosize=True,
-                margin=go.layout.Margin(l=0, r=35, t=0, b=0),
-                showlegend=False,
-                mapbox=dict(
-                    accesstoken=mapbox_access_token,
-                    center=dict(lat=latInitial, lon=lonInitial),  # 40.7272  # -73.991251
-                    style="light",
-                    bearing=0,
-                    zoom=10,
-                ),
-                updatemenus=[
-                    dict(
-                        buttons=(
-                            [
-                                dict(
-                                    args=[
-                                        {
-                                            "mapbox.zoom": 10,
-                                            "mapbox.center.lon": lonInitial,
-                                            "mapbox.center.lat": latInitial,
-                                            "mapbox.bearing": 0,
-                                            "mapbox.style": "light",
-                                        }
-                                    ],
-                                    label="Reset Zoom",
-                                    method="relayout",
-                                )
-                            ]
-                        ),
-                        direction="left",
-                        pad={"r": 0, "t": 0, "b": 0, "l": 0},
-                        showactive=False,
-                        type="buttons",
-                        x=0.45,
-                        y=0.02,
-                        xanchor="left",
-                        yanchor="bottom",
-                        bgcolor="#1E1E1E",                    
-                        borderwidth=1,
-                        bordercolor="#6d6d6d",
-                        font=dict(color="#FFFFFF"),
-                    ),
-                ],
-            ),
-            )
-    return fig
 
-colorVal = ["#2202d1"]*25
 
-def hourhist(result,datemonth):
-    if datemonth is not None and len(datemonth)!=0:            
-            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
-            month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['alarm_datetime']]              
-    result['hour'] = result['alarm_datetime'].dt.hour 
-    result = result.groupby(['hour']).count().reset_index()
-    result.columns = ['hour', 'count']
-    hourindex = range(0,24)
-    result=result.reindex(hourindex,fill_value=0)
-    #print(result.index)
-    #print(result)
-    xVal=result['hour']
-    yVal=result['count']
-    layout = go.Layout(
-        bargap=0.05,
-        autosize=True,
-        bargroupgap=0,
-        barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
-        showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
-        dragmode="select",
-        font=dict(color="white"),
-        xaxis=dict(
-            range=[-1, 25],
-            showgrid=False,           
-            tickvals = [ x for x in range(0,24)],       
-            ticktext = ['12 AM','1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM','7 AM','8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
-             '3 PM', '4 PM', '5 PM', '6 PM','7 PM','8 PM', '9 PM', '10 PM', '11 PM'],           
-            fixedrange=True,
-            ticksuffix="",
-        ),
-        yaxis=dict(
-            range=[0, max(yVal) + max(yVal) / 4],
-            showticklabels=False,
-            showgrid=False,
-            fixedrange=True,
-            rangemode="nonnegative",
-            zeroline=False,
-        ),
-        annotations=[
-            dict(
-                x=xi,
-                y=yi,
-                text=str(yi),
-                xanchor="center",
-                yanchor="bottom",
-                showarrow=False,
-                font=dict(color="white"),
-            )
-            for xi, yi in zip(xVal, yVal)
-        ],
-    )
+    return mapfig,outputstring,monthfig,dayfig,hourfig
 
-    return go.Figure(
-        data=[
-            go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
-        ],
-        layout=layout,
-    )
+# def hourhist(result,datemonth):
+#     if datemonth is not None and len(datemonth)!=0:            
+#             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
+#             month_condition = ((result['month'].isin(datemonth)))
+#             result = result.loc[month_condition][['alarm_datetime']]              
+#     result['hour'] = result['alarm_datetime'].dt.hour 
+#     result = result.groupby(['hour']).count().reset_index()
+#     result.columns = ['hour', 'count']
+#     hourindex = range(0,24)
+#     result=result.reindex(hourindex,fill_value=0)
+#     #print(result.index)
+#     #print(result)
+#     xVal=result['hour']
+#     yVal=result['count']
+#     layout = go.Layout(
+#         bargap=0.05,
+#         autosize=True,
+#         bargroupgap=0,
+#         barmode="group",
+#         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+#         showlegend=False,
+#         plot_bgcolor="#31302F",
+#         paper_bgcolor="#31302F",
+#         dragmode="select",
+#         font=dict(color="white"),
+#         xaxis=dict(
+#             range=[-1, 25],
+#             showgrid=False,           
+#             tickvals = [ x for x in range(0,24)],       
+#             ticktext = ['12 AM','1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM','7 AM','8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
+#              '3 PM', '4 PM', '5 PM', '6 PM','7 PM','8 PM', '9 PM', '10 PM', '11 PM'],           
+#             fixedrange=True,
+#             ticksuffix="",
+#         ),
+#         yaxis=dict(
+#             range=[0, max(yVal) + max(yVal) / 4],
+#             showticklabels=False,
+#             showgrid=False,
+#             fixedrange=True,
+#             rangemode="nonnegative",
+#             zeroline=False,
+#         ),
+#         annotations=[
+#             dict(
+#                 x=xi,
+#                 y=yi,
+#                 text=str(yi),
+#                 xanchor="center",
+#                 yanchor="bottom",
+#                 showarrow=False,
+#                 font=dict(color="white"),
+#             )
+#             for xi, yi in zip(xVal, yVal)
+#         ],
+#     )
 
-def dayhist(result,datemonth):
-    if datemonth is not None and len(datemonth)!=0:            
-            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
-            month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['alarm_datetime']]              
-    result['dayofweek'] = result['alarm_datetime'].dt.dayofweek 
-    result = result.groupby(['dayofweek']).count().reset_index()
-    result.columns = ['dayofweek', 'count']
-    dayindex = range(0,7)
-    result=result.reindex(dayindex,fill_value=0)
-    #print(result.index)
-    #print(result)
-    xVal=result['dayofweek']
-    yVal=result['count']
-    layout = go.Layout(
-        bargap=0.05,
-        autosize=True,
-        bargroupgap=0,
-        barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
-        showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
-        dragmode="select",
-        font=dict(color="white"),
-        xaxis=dict(
-            range=[-1, 8],
-            showgrid=False,           
-            tickvals = [0,1, 2, 3,4, 5,6],    
-            ticktext = ['Mon','Tues', 'Wed', 'Thur', 'Friday', 'Sat', 'Sun'],      
-            fixedrange=True,
-            ticksuffix="",
-        ),
-        yaxis=dict(
-            range=[0, max(yVal) + max(yVal) / 4],
-            showticklabels=False,
-            showgrid=False,
-            fixedrange=True,
-            rangemode="nonnegative",
-            zeroline=False,
-        ),
-        annotations=[
-            dict(
-                x=xi,
-                y=yi,
-                text=str(yi),
-                xanchor="center",
-                yanchor="bottom",
-                showarrow=False,
-                font=dict(color="white"),
-            )
-            for xi, yi in zip(xVal, yVal)
-        ],
-    )
+#     return go.Figure(
+#         data=[
+#             go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+#         ],
+#         layout=layout,
+#     )
 
-    return go.Figure(
-        data=[
-            go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
-        ],
-        layout=layout,
-    )
+# def dayhist(result,datemonth):
+#     if datemonth is not None and len(datemonth)!=0:            
+#             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
+#             month_condition = ((result['month'].isin(datemonth)))
+#             result = result.loc[month_condition][['alarm_datetime']]              
+#     result['dayofweek'] = result['alarm_datetime'].dt.dayofweek 
+#     result = result.groupby(['dayofweek']).count().reset_index()
+#     result.columns = ['dayofweek', 'count']
+#     dayindex = range(0,7)
+#     result=result.reindex(dayindex,fill_value=0)
+#     #print(result.index)
+#     #print(result)
+#     xVal=result['dayofweek']
+#     yVal=result['count']
+#     layout = go.Layout(
+#         bargap=0.05,
+#         autosize=True,
+#         bargroupgap=0,
+#         barmode="group",
+#         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+#         showlegend=False,
+#         plot_bgcolor="#31302F",
+#         paper_bgcolor="#31302F",
+#         dragmode="select",
+#         font=dict(color="white"),
+#         xaxis=dict(
+#             range=[-1, 8],
+#             showgrid=False,           
+#             tickvals = [0,1, 2, 3,4, 5,6],    
+#             ticktext = ['Mon','Tues', 'Wed', 'Thur', 'Friday', 'Sat', 'Sun'],      
+#             fixedrange=True,
+#             ticksuffix="",
+#         ),
+#         yaxis=dict(
+#             range=[0, max(yVal) + max(yVal) / 4],
+#             showticklabels=False,
+#             showgrid=False,
+#             fixedrange=True,
+#             rangemode="nonnegative",
+#             zeroline=False,
+#         ),
+#         annotations=[
+#             dict(
+#                 x=xi,
+#                 y=yi,
+#                 text=str(yi),
+#                 xanchor="center",
+#                 yanchor="bottom",
+#                 showarrow=False,
+#                 font=dict(color="white"),
+#             )
+#             for xi, yi in zip(xVal, yVal)
+#         ],
+#     )
 
-def monthhist(result,selection):
-    result['month_year'] = result['alarm_datetime'].dt.month 
-    result['month_year'] = result['month_year'].astype(str)
+#     return go.Figure(
+#         data=[
+#             go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+#         ],
+#         layout=layout,
+#     )
+
+# def monthhist(result,selection):
+#     result['month_year'] = result['alarm_datetime'].dt.month 
+#     result['month_year'] = result['month_year'].astype(str)
     
 
-    result = result.groupby(['month_year']).count().reset_index()
-    result.columns = ['month', 'count']
-    monthindex = range(0,12)
-    result=result.reindex(monthindex,fill_value=0)
-    result['m']=result['month'].astype(int)
-    result=result.sort_values('m')
+#     result = result.groupby(['month_year']).count().reset_index()
+#     result.columns = ['month', 'count']
+#     monthindex = range(0,12)
+#     result=result.reindex(monthindex,fill_value=0)
+#     result['m']=result['month'].astype(int)
+#     result=result.sort_values('m')
     
-    #print(result.index)
-    #print(result)
-    xVal=result['month']
-    yVal=result['count']
+#     #print(result.index)
+#     #print(result)
+#     xVal=result['month']
+#     yVal=result['count']
 
-    if selection is not None:        
-        xSelected = [int(x) for x in selection]
-        #print (selection)
-        for i in range(12):        
-            if i+1 in xSelected: 
-                #print ("setting to white " + str(i))         
-                colorVal[i]= "#FFFFFF"
-            else:
-                colorVal[i]= "#2202d1"
-    #print(colorVal)        
+#     if selection is not None:        
+#         xSelected = [int(x) for x in selection]
+#         #print (selection)
+#         for i in range(12):        
+#             if i+1 in xSelected: 
+#                 #print ("setting to white " + str(i))         
+#                 colorVal[i]= "#FFFFFF"
+#             else:
+#                 colorVal[i]= "#2202d1"
+#     #print(colorVal)        
 
-    layout = go.Layout(
-        bargap=0.1,
-        bargroupgap=0,
-        barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
-        showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
-        dragmode="select",
-        font=dict(color="white"),
-        xaxis=dict(
-            range=[0, 13],
-            showgrid=False,           
-            tickvals = [1, 2, 3,4, 5,6, 7,8, 9,10, 11,12],    
-            ticktext = ['Jan','Feb', 'March', 'Apr', 'May', 'June', 'July','Aug','Sep','Oct','Nov','Dec'],      
-            fixedrange=True,
-            ticksuffix="",
-        ),
-        yaxis=dict(
-            range=[0, max(yVal) + max(yVal) / 4],
-            showticklabels=False,
-            showgrid=False,
-            fixedrange=True,
-            rangemode="nonnegative",
-            zeroline=False,
-        ),
-        annotations=[
-            dict(
-                x=xi,
-                y=yi,
-                text=str(yi),
-                xanchor="center",
-                yanchor="bottom",
-                showarrow=False,
-                font=dict(color="white"),
-            )
-            for xi, yi in zip(xVal, yVal)
-        ],
-    )
+#     layout = go.Layout(
+#         bargap=0.1,
+#         bargroupgap=0,
+#         barmode="group",
+#         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+#         showlegend=False,
+#         plot_bgcolor="#31302F",
+#         paper_bgcolor="#31302F",
+#         dragmode="select",
+#         font=dict(color="white"),
+#         xaxis=dict(
+#             range=[0, 13],
+#             showgrid=False,           
+#             tickvals = [1, 2, 3,4, 5,6, 7,8, 9,10, 11,12],    
+#             ticktext = ['Jan','Feb', 'March', 'Apr', 'May', 'June', 'July','Aug','Sep','Oct','Nov','Dec'],      
+#             fixedrange=True,
+#             ticksuffix="",
+#         ),
+#         yaxis=dict(
+#             range=[0, max(yVal) + max(yVal) / 4],
+#             showticklabels=False,
+#             showgrid=False,
+#             fixedrange=True,
+#             rangemode="nonnegative",
+#             zeroline=False,
+#         ),
+#         annotations=[
+#             dict(
+#                 x=xi,
+#                 y=yi,
+#                 text=str(yi),
+#                 xanchor="center",
+#                 yanchor="bottom",
+#                 showarrow=False,
+#                 font=dict(color="white"),
+#             )
+#             for xi, yi in zip(xVal, yVal)
+#         ],
+#     )
 
-    return go.Figure(
-        data=[
-            go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
-        ],
-        layout=layout,
-    )
-# @app.callback(
-#     Output('histogram-text',"children"),
-#     [Input("histogram-basis","value"),Input("date-picker", "date"),
-#     Input("date-picker-end", "date"),           
-#     Input("time-slider", "value")]
-# )
-# def updatehistogramtext(histogramkind,start_date,end_date,timerange):
-#     outputkind=''
-#     if histogramkind=="month":
-#         outputkind= "Histogram by month"
-#     elif histogramkind=="day":
-#         outputkind= "Histogram by day of the week"
-#     elif histogramkind=="hour":
-#         outputkind= "Histogram by hour of the day"
-#     return "Histogram by %s from %s to %s within %s:00 to %s:00 hours."%(outputkind,start_date,end_date,timerange[0],timerange[1])
-
+#     return go.Figure(
+#         data=[
+#             go.Bar(x=xVal, y=yVal,marker=dict(color=np.array(colorVal)), hoverinfo="x"),
+#         ],
+#         layout=layout,
+#     )
 
 
 # %%
 @app.callback(
-    Output('histogram', 'figure'),
-    [Input("date-picker", "date"),
-    Input("date-picker-end", "date"),
-    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value"),Input("histogram-basis","value"),Input("time-slider", "value")]
-)
+     [Output(component_id='histogram', component_property='style'),Output(component_id='dayhistogram', component_property='style'),Output(component_id='hourhistogram', component_property='style')],
+     [Input("date-picker", "date"),
+     Input("date-picker-end", "date"),
+     Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value"),Input("histogram-basis","value"),Input("time-slider", "value")]
+ )
 def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,timerange):
-    if '1002' in emd_card_num:
-        emd_card_num=range(1,136)
-    elif '29' in emd_card_num:
-        emd_card_num.append('34')     
-    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
-    string = '[A-Z]'
-    updatedlist = [str(x) + string for x in emd_card_num]
-    separator = '|'
-    search_str = '^' + separator.join(updatedlist)
-    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime']]    
-    result['alarm_datetime'] = pd.to_datetime(result['alarm_datetime'])
-    timemin,timemax=timerange
-    timemin=int(timemin)
-    timemax=int(timemax)
-    if(timemin>0 or timemax<24):
-        result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour    
-        time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
-        result = result.loc[time_condition][['alarm_datetime']]  
-
     if histogramkind=="month":
-        return monthhist(result,selection)
+        return {'display': 'block'},{'display': 'none'},{'display': 'none'}
     elif histogramkind=="day":
-        return dayhist(result,selection)
+        return {'display': 'none'},{'display': 'block'},{'display': 'none'}
     elif histogramkind=="hour":
-        return hourhist(result,selection)
+        return {'display': 'none'},{'display': 'none'},{'display': 'block'}
 
    
 
 # %%
 if __name__ == '__main__':
-	#app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
-    app.server.run(threaded=True)
+	app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
+    #app.server.run(threaded=True)
 
 # %%
