@@ -94,19 +94,19 @@ app.layout = html.Div(
                                 dcc.Checklist(
                                         options=[
                                               {'label': 'All', 'value': '1002'},
-                                          {'label': 'Automatic Crash Notifications', 'value': '34'},
+                                          #{'label': 'Automatic Crash Notifications', 'value': '34'},
                                                 {'label': 'Motor Vehicle Accidents', 'value': '29'},
                                             {'label': 'Breathing Problems', 'value': '6'},
                                             {'label': 'Burns', 'value': '7'},
                                             {'label': 'Cardiac Problems', 'value': '9'},
                                             {'label': 'Chest Pain', 'value': '10'},
                                                  {'label': 'Stab/Gunshot', 'value': '27'},    
-                                            {'label': 'Pandemic Flu', 'value': '36'},
+                                            #{'label': 'Pandemic Flu', 'value': '36'},
                                             {'label': 'Structure Fire', 'value': '69'},
                                             {'label': 'Outside Fire', 'value': '67'},
                                             {'label': 'Vehicle Fire', 'value': '71'},      
                                         ],
-                                        value=['29', '34'],
+                                        value=['29'],
                                         id='emd-card-num-dropdown' ,
                                          labelStyle={'display': 'inline-block'} ,
                                     ),                                                         
@@ -114,9 +114,6 @@ app.layout = html.Div(
                         ),
                         # Change to side-by-side for mobile layout
                         html.Div(
-                            className="row",
-                            children=[
-                                html.Div(
                                     className="div-for-dropdown",
                                     children=[
                                         dcc.Markdown('''## Filter Incidents By Month'''),
@@ -146,7 +143,7 @@ app.layout = html.Div(
                                         )
                                     ],
                                 ),
-                                html.Div(className="div-for-dropdown",
+                        html.Div(className="div-for-dropdown",
                                     children=[
                                     dcc.Markdown('''## Filter Incidents By Time of Day'''),
                                     #html.P("""Select Time Range""",style={'text-align': 'left' ,'font-weight':'bold'}),
@@ -160,43 +157,14 @@ app.layout = html.Div(
                                     ),
                                     ]
                                     ),
-                                # html.Div(className="div-for-dropdown",
-                                #     children=[
-                                #     dcc.Markdown('''## Configure Histogram'''),
-                                #     #html.P("""Select histogram Basis""",style={'text-align': 'left' ,'font-weight':'bold'}),
-                                    
-                                #     ]
-                                #     ), 
-                                # html.Div(
-                                #     className="div-for-dropdown",
-                                #     children=[                                
-                                #         html.P("""Severity Selection""",style={'text-align': 'left' ,'font-weight':'bold'}),
-                                #         dcc.RadioItems( id='severity-basis',
-                                #                 options=[                                             
-                                #                     {'label': 'With Severity', 'value': 'severity'},
-                                #                     {'label': 'Without Severity', 'value': 'none'},
-                                #                     ],
-                                #                 labelStyle={'display': 'inline-block'} ,     
-                                #                 value='severity'
-                                #             ),                                 
-                                #     ],
-                                # ),   
-                                html.Div(
+                        html.Div(
                                     className="div-for-dropdown",                                    
                                     children=[
-                                        dcc.Markdown('''## Configure Heatmap'''),#,html.P('Select radius to configure heatmap',style={'text-align': 'left' ,'font-weight':'bold'}),
-                                        # dcc.Slider(
-                                        #             id='map-graph-radius2',
-                                        #             min=1,
-                                        #             max=10,
-                                        #             step=0.05,
-                                        #             marks={i: '{}'.format(i) for i in range(1, 11)},
-                                        #             value=2
-                                        #         ),
+                                        dcc.Markdown('''## Include Incident Severity'''),
                                         dcc.RadioItems( id='severity-basis',
                                                 options=[                                             
-                                                    {'label': 'With Severity', 'value': 'severity'},
-                                                    {'label': 'Without Severity', 'value': 'none'},
+                                                    {'label': 'Yes', 'value': 'severity'},
+                                                    {'label': 'No', 'value': 'none'},
                                                     ],
                                                 labelStyle={'display': 'inline-block'} ,     
                                                 value='severity'
@@ -204,14 +172,7 @@ app.layout = html.Div(
                                     ]
                                 ),
                                 
-                                html.Div(className="div-for-dropdown", 
-                                            children=[
-                                                html.P(id='heatmap-text',style={'text-align': 'left'}),
-                                                html.P(' '),
-                                                dcc.Markdown('The design of this site is based on [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo)')]),                                   
-                            ],
-                        ),
-                        
+                                                
                         
                     ],
                 ),
@@ -221,7 +182,7 @@ app.layout = html.Div(
                     children=[
                         
                         dcc.Markdown('''Adjust Slider below to configure the heatmap intensity.''') ,
-                        html.Div([dcc.Slider(
+                        html.Div(children=[dcc.Slider(
                                                     id='map-graph-radius',
                                                     min=1,
                                                     max=10,
@@ -239,12 +200,19 @@ app.layout = html.Div(
                                         value='month',style={'text-align': 'center'},
                                     ),
                         #html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'center'})]),                       
-                        #html.P('Histogram by Month',id='histogram-text',style={'text-align': 'left','display':'none', 'padding-top':'20px'}),                                                
+                        html.P('Histogram by Month',id='heatmap-text',style={'text-align': 'center'}),                                                
                         dcc.Graph(id="histogram"),
                     ],
                 ),
             ],
-        )
+        ),
+        html.Div(
+            className="row",
+            children=[html.Div(className="div-for-dropdown", style={'text-align': 'center'},
+                                            children=[
+                                                dcc.Markdown('Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department.')]),                                   
+            ]
+        ),
     ]
 )
 
@@ -281,7 +249,9 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
 def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,severity):
   
     if '1002' in emd_card_num:
-        emd_card_num=range(1,136)        
+        emd_card_num=range(1,136)
+    elif '29' in emd_card_num:
+        emd_card_num.append('34')        
     date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
@@ -334,7 +304,9 @@ def transform_severity(emdCardNumber):
 def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange,severity):
   
     if '1002' in emd_card_num:
-        emd_card_num=range(1,136)        
+        emd_card_num=range(1,136)
+    elif '29' in emd_card_num:
+        emd_card_num.append('34')           
     date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
@@ -683,6 +655,8 @@ def monthhist(result,selection):
 def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,timerange):
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
+    elif '29' in emd_card_num:
+        emd_card_num.append('34')     
     date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
