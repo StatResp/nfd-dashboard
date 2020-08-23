@@ -202,7 +202,8 @@ app.layout = html.Div(
                                                 value='severity'
                                             ),                                        
                                     ]
-                                ),                                
+                                ),
+                                html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'left','padding-top':'20px'})]),                                
                             ],
                         ),
                         
@@ -212,12 +213,9 @@ app.layout = html.Div(
                 # Column for app graphs and plots
                 html.Div(
                     className="eight columns div-for-charts bg-grey",
-                    children=[html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'left','padding-top':'20px'})]),
+                    children=[
                         
-                                         
-                     
-                        dcc.Graph(id="map-graph"),
-                        dcc.Markdown('''Adjust Slider below to configure the heatmap intensity.''') ,
+                        dcc.Markdown('''### Adjust Slider below to configure the heatmap intensity.''') ,
                         html.Div([dcc.Slider(
                                                     id='map-graph-radius',
                                                     min=1,
@@ -225,14 +223,15 @@ app.layout = html.Div(
                                                     step=0.05,
                                                     marks={i: '{}'.format(i) for i in range(1, 11)},
                                                     value=2
-                                                ),],),     
+                                                ),],),    
+                        dcc.Graph(id="map-graph"), 
                         dcc.RadioItems( id='histogram-basis',
                                           options=[                                             
-                                              {'label': 'By Month', 'value': 'month'},
-                                              {'label': 'By Day', 'value': 'day'},
-                                              {'label': 'By Hour', 'value': 'hour'}],
+                                              {'label': 'Group By Month', 'value': 'month'},
+                                              {'label': 'Group By Day of The Week', 'value': 'day'},
+                                              {'label': 'Group By Hour of The Day', 'value': 'hour'}],
                                         labelStyle={'display': 'inline-block'} ,     
-                                        value='month'
+                                        value='month',style={'text-align': 'center'},
                                     ),                       
                         html.P('Histogram by Month',id='histogram-text',style={'text-align': 'left','display':'none', 'padding-top':'20px'}),                                                
                         dcc.Graph(id="histogram"),
@@ -295,10 +294,10 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,se
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
             result = result.loc[month_condition][['latitude','longitude']]   
-    if 'severity' in severity:
-        return "Incident distribution (with severity from 1 to 5) from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
-    else:
-        return "Incident distribution from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
+    # if 'severity' in severity:
+    #    return "Incident distribution (with severity from 1 to 5) from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
+    #else:
+    return "Showing %d incidents from %s to %s within %s:00 to %s:00 hours. "%(result.size,start_date,end_date,timerange[0],timerange[1])
   
 def transform_severity(emdCardNumber):
     if 'A' in emdCardNumber:
@@ -706,7 +705,7 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,
 
 # %%
 if __name__ == '__main__':
-	app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
-    #app.server.run(threaded=True)
+	#app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
+    app.server.run(threaded=True)
 
 # %%
