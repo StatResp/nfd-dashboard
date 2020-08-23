@@ -59,7 +59,8 @@ app.layout = html.Div(
                         html.Div(
                             className="div-for-dropdown",
                             children=[
-                                html.P("""Select Start Date """),
+                                #html.P("""Select Start Date """,style={'text-align': 'left' ,'font-weight':'bold'}),
+                                dcc.Markdown('''## Select Start Date'''),
                                 dcc.DatePickerSingle(
                                     id="date-picker",
                                     min_date_allowed=dt(2019, 1, 1),
@@ -73,8 +74,8 @@ app.layout = html.Div(
                         ),
                         html.Div(
                             className="div-for-dropdown",
-                            children=[
-                                html.P("""Select End Date """),
+                            children=[                                
+                                dcc.Markdown('''## Select End Date'''),
                                 dcc.DatePickerSingle(
                                     id="date-picker-end",
                                     min_date_allowed=dt(2019, 1, 1),
@@ -88,8 +89,8 @@ app.layout = html.Div(
                         ),
                         html.Div(
                             className="div-for-dropdown",
-                            children=[
-                                html.P("""Select incident categories""",style={'text-align': 'center'}),
+                            children=[                                
+                                dcc.Markdown('''## Select Incident Categories'''),
                                 dcc.Checklist(
                                         options=[
                                               {'label': 'All', 'value': '1002'},
@@ -106,21 +107,11 @@ app.layout = html.Div(
                                             {'label': 'Vehicle Fire', 'value': '71'},      
                                         ],
                                         value=['29', '34'],
-                                        id='emd-card-num-dropdown' 
-
-                                    ),
-                                html.P("""Severity Selection""",style={'text-align': 'center'}),
-                                dcc.RadioItems( id='severity-basis',
-                                          options=[                                             
-                                              {'label': 'With Severity', 'value': 'severity'},
-                                              {'label': 'Without Severity', 'value': 'none'},
-                                              ],
-                                        labelStyle={'display': 'inline-block'} ,     
-                                        value='severity'
-                                    ),                                 
+                                        id='emd-card-num-dropdown' ,
+                                         labelStyle={'display': 'inline-block'} ,
+                                    ),                                                         
                             ],
-                        ),         
-
+                        ),
                         # Change to side-by-side for mobile layout
                         html.Div(
                             className="row",
@@ -128,7 +119,8 @@ app.layout = html.Div(
                                 html.Div(
                                     className="div-for-dropdown",
                                     children=[
-                                        html.P("""Select from the list to filter data by month.""",style={'text-align': 'center'}),
+                                        dcc.Markdown('''## Filter Incidents By Month'''),
+                                        #html.P("""Select from the list to filter data by month.""",style={'text-align': 'left' ,'font-weight':'bold'}),
                                         # Dropdown to select times
                                         dcc.Checklist(
                                             id="bar-selector",
@@ -156,7 +148,8 @@ app.layout = html.Div(
                                 ),
                                 html.Div(className="div-for-dropdown",
                                     children=[
-                                    html.P("""Select Time Range""",style={'text-align': 'center'}),
+                                    dcc.Markdown('''## Filter Incidents By Time of Day'''),
+                                    #html.P("""Select Time Range""",style={'text-align': 'left' ,'font-weight':'bold'}),
                                     dcc.RangeSlider(
                                         id='time-slider',
                                         min=0,
@@ -167,33 +160,49 @@ app.layout = html.Div(
                                     ),
                                     ]
                                     ),
-                                html.Div(className="div-for-dropdown",
-                                    children=[
-                                    html.P("""Select histogram Basis""",style={'text-align': 'center'}),
-                                    dcc.RadioItems( id='histogram-basis',
-                                          options=[                                             
-                                              {'label': 'By Month', 'value': 'month'},
-                                              {'label': 'By Day', 'value': 'day'},
-                                              {'label': 'By Hour', 'value': 'hour'}],
-                                        labelStyle={'display': 'inline-block'} ,     
-                                        value='month'
-                                    ),
-                                    ]
-                                    ), 
+                                # html.Div(className="div-for-dropdown",
+                                #     children=[
+                                #     dcc.Markdown('''## Configure Histogram'''),
+                                #     #html.P("""Select histogram Basis""",style={'text-align': 'left' ,'font-weight':'bold'}),
+                                    
+                                #     ]
+                                #     ), 
+                                # html.Div(
+                                #     className="div-for-dropdown",
+                                #     children=[                                
+                                #         html.P("""Severity Selection""",style={'text-align': 'left' ,'font-weight':'bold'}),
+                                #         dcc.RadioItems( id='severity-basis',
+                                #                 options=[                                             
+                                #                     {'label': 'With Severity', 'value': 'severity'},
+                                #                     {'label': 'Without Severity', 'value': 'none'},
+                                #                     ],
+                                #                 labelStyle={'display': 'inline-block'} ,     
+                                #                 value='severity'
+                                #             ),                                 
+                                #     ],
+                                # ),   
                                 html.Div(
                                     className="div-for-dropdown",                                    
                                     children=[
-                                        html.P('Select radius to configure heatmap',style={'text-align': 'center'}),
-                                        dcc.Slider(
-                                                    id='map-graph-radius',
-                                                    min=1,
-                                                    max=10,
-                                                    step=0.05,
-                                                    marks={i: '{}'.format(i) for i in range(1, 11)},
-                                                    value=2
-                                                ),                                       
+                                        dcc.Markdown('''## Configure Heatmap'''),#,html.P('Select radius to configure heatmap',style={'text-align': 'left' ,'font-weight':'bold'}),
+                                        # dcc.Slider(
+                                        #             id='map-graph-radius2',
+                                        #             min=1,
+                                        #             max=10,
+                                        #             step=0.05,
+                                        #             marks={i: '{}'.format(i) for i in range(1, 11)},
+                                        #             value=2
+                                        #         ),
+                                        dcc.RadioItems( id='severity-basis',
+                                                options=[                                             
+                                                    {'label': 'With Severity', 'value': 'severity'},
+                                                    {'label': 'Without Severity', 'value': 'none'},
+                                                    ],
+                                                labelStyle={'display': 'inline-block'} ,     
+                                                value='severity'
+                                            ),                                        
                                     ]
-                                )
+                                ),                                
                             ],
                         ),
                         
@@ -203,10 +212,29 @@ app.layout = html.Div(
                 # Column for app graphs and plots
                 html.Div(
                     className="eight columns div-for-charts bg-grey",
-                    children=[           
-                         html.P(id='heatmap-text',style={'text-align': 'center','padding-top':'20px'}),               
-                        dcc.Graph(id="map-graph"),                       
-                        html.P('Histogram by Month',id='histogram-text',style={'text-align': 'center','padding-top':'20px'}),                                                
+                    children=[html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'left','padding-top':'20px'})]),
+                        
+                                         
+                     
+                        dcc.Graph(id="map-graph"),
+                        dcc.Markdown('''Adjust Slider below to configure the heatmap intensity.''') ,
+                        html.Div([dcc.Slider(
+                                                    id='map-graph-radius',
+                                                    min=1,
+                                                    max=10,
+                                                    step=0.05,
+                                                    marks={i: '{}'.format(i) for i in range(1, 11)},
+                                                    value=2
+                                                ),],),     
+                        dcc.RadioItems( id='histogram-basis',
+                                          options=[                                             
+                                              {'label': 'By Month', 'value': 'month'},
+                                              {'label': 'By Day', 'value': 'day'},
+                                              {'label': 'By Hour', 'value': 'hour'}],
+                                        labelStyle={'display': 'inline-block'} ,     
+                                        value='month'
+                                    ),                       
+                        html.P('Histogram by Month',id='histogram-text',style={'text-align': 'left','display':'none', 'padding-top':'20px'}),                                                
                         dcc.Graph(id="histogram"),
                     ],
                 ),
@@ -678,7 +706,7 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,
 
 # %%
 if __name__ == '__main__':
-	#app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
-    app.server.run(threaded=True)
+	app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
+    #app.server.run(threaded=True)
 
 # %%
