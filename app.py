@@ -203,7 +203,12 @@ app.layout = html.Div(
                                             ),                                        
                                     ]
                                 ),
-                                html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'left','padding-top':'20px'})]),                                
+                                
+                                html.Div(className="div-for-dropdown", 
+                                            children=[
+                                                html.P(id='heatmap-text',style={'text-align': 'left'}),
+                                                html.P(' '),
+                                                dcc.Markdown('The design of this site is based on [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo)')]),                                   
                             ],
                         ),
                         
@@ -215,7 +220,7 @@ app.layout = html.Div(
                     className="eight columns div-for-charts bg-grey",
                     children=[
                         
-                        dcc.Markdown('''### Adjust Slider below to configure the heatmap intensity.''') ,
+                        dcc.Markdown('''Adjust Slider below to configure the heatmap intensity.''') ,
                         html.Div([dcc.Slider(
                                                     id='map-graph-radius',
                                                     min=1,
@@ -224,7 +229,7 @@ app.layout = html.Div(
                                                     marks={i: '{}'.format(i) for i in range(1, 11)},
                                                     value=2
                                                 ),],),    
-                        dcc.Graph(id="map-graph"), 
+                        dcc.Graph(id="map-graph"),                        
                         dcc.RadioItems( id='histogram-basis',
                                           options=[                                             
                                               {'label': 'Group By Month', 'value': 'month'},
@@ -232,8 +237,9 @@ app.layout = html.Div(
                                               {'label': 'Group By Hour of The Day', 'value': 'hour'}],
                                         labelStyle={'display': 'inline-block'} ,     
                                         value='month',style={'text-align': 'center'},
-                                    ),                       
-                        html.P('Histogram by Month',id='histogram-text',style={'text-align': 'left','display':'none', 'padding-top':'20px'}),                                                
+                                    ),
+                        #html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'center'})]),                       
+                        #html.P('Histogram by Month',id='histogram-text',style={'text-align': 'left','display':'none', 'padding-top':'20px'}),                                                
                         dcc.Graph(id="histogram"),
                     ],
                 ),
@@ -469,7 +475,7 @@ def hourhist(result,datemonth):
         autosize=True,
         bargroupgap=0,
         barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=50),
+        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
         plot_bgcolor="#31302F",
         paper_bgcolor="#31302F",
@@ -532,7 +538,7 @@ def dayhist(result,datemonth):
         autosize=True,
         bargroupgap=0,
         barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=50),
+        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
         plot_bgcolor="#31302F",
         paper_bgcolor="#31302F",
@@ -607,7 +613,7 @@ def monthhist(result,selection):
         bargap=0.1,
         bargroupgap=0,
         barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=50),
+        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
         plot_bgcolor="#31302F",
         paper_bgcolor="#31302F",
