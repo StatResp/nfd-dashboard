@@ -180,6 +180,12 @@ app.layout = html.Div(
                                                             ),],),    
                                                 ]
                                     ),
+                                    html.Div(children=[html.P('Incidents',id='incident-text',style={'text-align': 'left','font-weight': 'bold'}),
+                                                       html.P('Months',id='month-text',style={'text-align': 'left','font-weight': 'bold'}),
+                                                       html.P('Time',id='time-text',style={'text-align': 'left','font-weight': 'bold'}),
+                                                       html.P('Response',id='response-text',style={'text-align': 'left','font-weight': 'bold'}),
+                                                      ],
+                                    )
                     ],
                 ),
                 # Column for app graphs and plots
@@ -207,7 +213,6 @@ app.layout = html.Div(
                                         value='month',style={'text-align': 'center'},
                                     ),
                         #html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'center'})]),                       
-                        html.P('Histogram by Month',id='heatmap-text',style={'text-align': 'center'}),                                                
                         dcc.Graph(id="histogram"),
                     ],
                 ),
@@ -217,7 +222,7 @@ app.layout = html.Div(
             className="row",
             children=[html.Div(className="div-for-dropdown", style={'text-align': 'center'},
                                             children=[
-                                                dcc.Markdown('Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department. Funding from this work has been provided by the National Science Foundation under awards [CNS-1640624](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1640624) and  [IIS-1814958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1814958). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.')]),                                   
+                                                dcc.Markdown('Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department. Funding for this work has been provided by the National Science Foundation under awards [CNS-1640624](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1640624) and  [IIS-1814958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1814958). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.')]),                                   
             ]
         ),
     ]
@@ -245,7 +250,7 @@ app.layout = html.Div(
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 
 @app.callback(
-    Output('heatmap-text', "children"),
+    [Output('incident-text', "children"),Output('month-text', "children"),Output('time-text', "children"),Output('response-text', "children"),Output(component_id='response-text', component_property='style'),Output(component_id='time-text', component_property='style'),Output(component_id='month-text', component_property='style')] ,       
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),    
     Input('emd-card-num-dropdown', 'value'),
@@ -287,7 +292,8 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,se
     # if 'severity' in severity:
     #    return "Incident distribution (with severity from 1 to 5) from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
     #else:
-    return "Showing %d incidents from %s to %s within %s:00 to %s:00 hours with responsetime >%s minutes. "%(result.size,start_date,end_date,timerange[0],timerange[1],str(responsefilter))
+    return "Incidents: %d"%(result.size), "Months: %s"%(str(datemonth)),"Time %s:00 to %s:00"%(timerange[0],timerange[1]),"Response Time >%s minutes"%(str(responsefilter)),({'display': 'none'}, {'display': 'block','text-align': 'left','font-weight': 'bold'})[responsefilter>0],({'display': 'none'}, {'display': 'block','text-align': 'left','font-weight': 'bold'})[timemin>0 or timemax<24],({'display': 'none'}, {'display': 'block','text-align': 'left','font-weight': 'bold'})[datemonth is not None and len(datemonth)!=0]
+   # return "Showing %d incidents from %s to %s within %s:00 to %s:00 hours with responsetime >%s minutes. "%(result.size,,str(responsefilter))
   
 def transform_severity(emdCardNumber):
     if 'A' in emdCardNumber:
