@@ -470,10 +470,20 @@ def hourhist(result,datemonth):
     result['hour'] = result['alarm_datetime'].dt.hour 
     result = result.groupby(['hour']).count().reset_index()
     result.columns = ['hour', 'count']
-    hourindex = range(0,24)
-    result=result.reindex(hourindex,fill_value=0)
+    #hourindex = range(0,24)
+    #result=result.reindex(hourindex,fill_value=0)
     #print(result.index)
-    #print(result)
+    #print(result.head(n=24))
+    result['h']=result['hour'].astype(int)
+
+    for hour in list(range(0,24)):
+        if hour not in result['h'].values:
+            new_row = {'h':hour,'hour':str(hour),'count':0}
+            result=result.append(new_row,ignore_index=True)
+    
+    #print("more values")
+    #print(result.head(n=24))
+
     xVal=result['hour']
     yVal=result['count']
     colorVal = ["#2202d1"]*25
@@ -607,34 +617,51 @@ def responsehist(result,datemonth):
     return fig
 
 
-def monthhist(result,selection):
+def monthhist(result,datemonth):
     result=result.drop(columns=['responsetime',])
-    result['month_year'] = result['alarm_datetime'].dt.month 
+    if datemonth is not None and len(datemonth)!=0:            
+            result['month_year'] = pd.to_datetime(result['alarm_datetime']).dt.month
+            month_condition = ((result['month_year'].isin(datemonth)))
+            result = result.loc[month_condition]#,'incidentNumber','alarm_datetime','latitude','longitude','emdCardNumber']]
+    else:
+        result['month_year'] = result['alarm_datetime'].dt.month 
     result['month_year'] = result['month_year'].astype(str)
     colorVal = ["#2202d1"]*25
-    
-
     result = result.groupby(['month_year']).count().reset_index()
     result.columns = ['month', 'count']
-    monthindex = range(0,12)
-    result=result.reindex(monthindex,fill_value=0)
     result['m']=result['month'].astype(int)
+  
+    #print(result.head(n=12))
+    monthindex = range(1,13)
+    for month in list(range(1,13)):
+        if month not in result['m'].values:
+            new_row = {'m':month, 'month':str(month), 'count':0}
+            result=result.append(new_row,ignore_index=True)
     result=result.sort_values('m')
+    #print(result.head(n=12))
+
+    #print(str(monthindex))
+    #result=result.reindex(monthindex,fill_value=0)
+    #result['m']=result['month'].astype(int)
+    #result=result.sort_values('m')
+    #result=result.reindex()
+    #print(result.head(n=12))
     
     #print(result.index)
     #print(result)
     xVal=result['month']
     yVal=result['count']
 
-    if selection is not None:        
-        xSelected = [int(x) for x in selection]
-        #print (selection)
-        for i in range(12):        
-            if i+1 in xSelected: 
-                #print ("setting to white " + str(i))         
-                colorVal[i]= "#FFFFFF"
-            else:
-                colorVal[i]= "#2202d1"
+    #if selection is not None:        
+    #    xSelected = [int(x) for x in selection]
+     #   result=result.apply(lambda row: 
+        #print ("x:"+str(xSelected))
+        #for i in range(12):        
+        #    if i+1 in xSelected: 
+        #        print ("setting to white " + str(i))         
+        #        colorVal[i]= "#FFFFFF"
+        #    else:
+        #        colorVal[i]= "#2202d1"
     #print(colorVal)        
 
     layout = go.Layout(
