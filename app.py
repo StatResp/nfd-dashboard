@@ -195,7 +195,8 @@ app.layout = html.Div(
                                           options=[                                             
                                               {'label': 'Group By Month', 'value': 'month'},
                                               {'label': 'Group By Day of The Week', 'value': 'day'},
-                                              {'label': 'Group By Hour of The Day', 'value': 'hour'}],
+                                              {'label': 'Group By Hour of The Day', 'value': 'hour'},
+                                              {'label': 'Show Response Time', 'value': 'response'}],
                                         labelStyle={'display': 'inline-block'} ,     
                                         value='month',style={'text-align': 'center'},
                                     ),
@@ -313,7 +314,7 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
     emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude','emdCardNumber']]  
+    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude','emdCardNumber','responsetime']]  
     result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
     result['severity']=result['emdCardNumber'].apply(lambda x: transform_severity(x))
     timemin,timemax=timerange
@@ -321,17 +322,18 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     timemax=int(timemax)
     if(timemin>0 or timemax<24):
         time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
-        result = result.loc[time_condition][['alarm_datetime','latitude','longitude','severity']]  
+        result = result.loc[time_condition][['alarm_datetime','latitude','longitude','severity','responsetime']]  
     if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['latitude','longitude','severity']]  
+            result = result.loc[month_condition][['latitude','longitude','severity','responsetime']]  
     #use go.Densitymapbox(lat=quakes.Latitude, lon=quakes.Longitude, z=quakes.Magnitude,
     latInitial=36.16228
     lonInitial=-86.774372
     
+    #z=result['responsetime']/60,zmax=30,zmin=10
     if 'severity' in severity:
-        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],z=result['severity'],radius=radius),layout=Layout(
+        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],radius=radius),layout=Layout(
                 autosize=True,
                 margin=go.layout.Margin(l=0, r=35, t=0, b=0),
                 showlegend=False,
@@ -426,9 +428,10 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
             )
     return fig
 
-colorVal = ["#2202d1"]*25
+
 
 def hourhist(result,datemonth):
+    result=result.drop(columns=['responsetime',])
     if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
@@ -442,6 +445,7 @@ def hourhist(result,datemonth):
     #print(result)
     xVal=result['hour']
     yVal=result['count']
+    colorVal = ["#2202d1"]*25
     layout = go.Layout(
         bargap=0.05,
         autosize=True,
@@ -492,6 +496,7 @@ def hourhist(result,datemonth):
     )
 
 def dayhist(result,datemonth):
+    result=result.drop(columns=['responsetime',])
     if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
@@ -503,6 +508,7 @@ def dayhist(result,datemonth):
     result=result.reindex(dayindex,fill_value=0)
     #print(result.index)
     #print(result)
+    colorVal = ["#2202d1"]*25
     xVal=result['dayofweek']
     yVal=result['count']
     layout = go.Layout(
@@ -553,9 +559,21 @@ def dayhist(result,datemonth):
         layout=layout,
     )
 
+
+def responsehist(result,selection):
+    fig = px.histogram(result, x="responsetime", marginal="box")
+    fig.update_xaxes( 
+        title="Response Time (Minutes)", showgrid=True
+    )
+    fig.update_layout(plot_bgcolor="#31302F",margin=go.layout.Margin(l=10, r=0, t=0, b=30),paper_bgcolor="#31302F",font=dict(color="white"))
+    return fig
+
+
 def monthhist(result,selection):
+    result=result.drop(columns=['responsetime',])
     result['month_year'] = result['alarm_datetime'].dt.month 
     result['month_year'] = result['month_year'].astype(str)
+    colorVal = ["#2202d1"]*25
     
 
     result = result.groupby(['month_year']).count().reset_index()
@@ -664,7 +682,7 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,
     search_str = '^' + separator.join(updatedlist)
     emd_card_condition = (df.emdCardNumber.str.contains(search_str))
     
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime']]    
+    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','responsetime']]    
     result['alarm_datetime'] = pd.to_datetime(result['alarm_datetime'])
     timemin,timemax=timerange
     timemin=int(timemin)
@@ -672,7 +690,7 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,
     if(timemin>0 or timemax<24):
         result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour    
         time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
-        result = result.loc[time_condition][['alarm_datetime']]  
+        result = result.loc[time_condition][['alarm_datetime','responsetime']]  
 
     if histogramkind=="month":
         return monthhist(result,selection)
@@ -680,6 +698,8 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,
         return dayhist(result,selection)
     elif histogramkind=="hour":
         return hourhist(result,selection)
+    elif histogramkind=="response":
+        return responsehist(result,selection)
 
    
 
