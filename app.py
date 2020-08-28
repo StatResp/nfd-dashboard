@@ -352,8 +352,10 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     
     #z=result['responsetime']/60,zmax=30,zmin=10
     if 'severity' in severity:
-        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], z=result['severity'], lon=result['longitude'],customdata=result[['incidentNumber','responsetime','alarm_datetime','severity','emdCardNumber']],
-                hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[4]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}<br> Severity  %{customdata[3]}",radius=radius),layout=Layout(
+        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], z=result['severity'], lon=result['longitude'],
+                #customdata=result[['incidentNumber','responsetime','alarm_datetime','severity','emdCardNumber']],
+                #hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[4]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}<br> Severity  %{customdata[3]}",
+                radius=radius),layout=Layout(
                 autosize=True,
                 margin=go.layout.Margin(l=0, r=35, t=0, b=0),
                 showlegend=False,
@@ -400,8 +402,10 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
             ),
             )
     else:
-        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],customdata=result[['incidentNumber','responsetime','alarm_datetime','severity','emdCardNumber']],
-                hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[4]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}<br> Severity  %{customdata[3]}",radius=radius),layout=Layout(
+        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],
+                #customdata=result[['incidentNumber','responsetime','alarm_datetime','severity','emdCardNumber']],
+                #hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[4]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}<br> Severity  %{customdata[3]}",
+                radius=radius),layout=Layout(
                 autosize=True,
                 margin=go.layout.Margin(l=0, r=35, t=0, b=0),
                 showlegend=False,
