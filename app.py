@@ -134,7 +134,7 @@ app.layout = html.Div(
                                                     {'label': 'Sep', 'value': '9'},
                                                     {'label': 'Oct', 'value': '10'},
                                                     {'label': 'Nov', 'value': '11'},
-                                                    {'label': 'Dec', 'value': '11'},
+                                                    {'label': 'Dec', 'value': '12'},
                                                 
                                                 
                                             ],
