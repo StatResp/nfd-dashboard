@@ -143,7 +143,7 @@ app.layout = html.Div(
                                         )
                                     ],
                                 ),
-                        html.Div(
+                        html.Div(style={'display': 'none'},
                                     className="div-for-dropdown",                                    
                                     children=[
                                         dcc.Markdown('''## Include Incident Severity'''),
@@ -256,10 +256,7 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
 def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,severity,responsefilter):
   
     responsefilter=float(responsefilter)
-    if responsefilter>0:
-        result =  df_o[df_o.responsetime>responsefilter]
-    else:
-        result=df_o
+    result=df_o
 
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
@@ -270,8 +267,12 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,se
     updatedlist = [str(x) + string for x in emd_card_num]
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
+    responsecondition=((result['responsetime']>responsefilter))
     emd_card_condition = (result.emdCardNumber.str.contains(search_str))
-    result = result.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude']]  
+    if responsefilter>0:
+        result = result.loc[date_condition & emd_card_condition & responsecondition ][['alarm_datetime','latitude','longitude']]  
+    else:
+         result = result.loc[date_condition & emd_card_condition ][['alarm_datetime','latitude','longitude']]  
     result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
     timemin,timemax=timerange
     timemin=int(timemin)
@@ -316,22 +317,22 @@ def transform_severity(emdCardNumber):
 )
 def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange,severity,responsefilter):
     responsefilter=float(responsefilter)
-    if responsefilter>0:
-        result =  df_o[df_o.responsetime>responsefilter]
-    else:
-        result=df_o
-
+    result=df_o
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
     elif '29' in emd_card_num:
         emd_card_num.append('34')           
     date_condition = ((result['alarm_date'] >= start_date) & (result['alarm_date'] <= end_date))
+    responsecondition=((result['responsetime']>responsefilter))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
     emd_card_condition = (result.emdCardNumber.str.contains(search_str))
-    result = result.loc[date_condition & emd_card_condition][['incidentNumber','alarm_datetime','latitude','longitude','emdCardNumber','responsetime']]  
+    if responsefilter>0:
+        result = result.loc[date_condition & emd_card_condition & responsecondition ][['incidentNumber','alarm_datetime','latitude','longitude','emdCardNumber','responsetime']]
+    else:
+        result = result.loc[date_condition & emd_card_condition][['incidentNumber','alarm_datetime','latitude','longitude','emdCardNumber','responsetime']]  
     result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
     result['severity']=result['emdCardNumber'].apply(lambda x: transform_severity(x))
     timemin,timemax=timerange
@@ -580,7 +581,11 @@ def dayhist(result,datemonth):
     )
 
 
-def responsehist(result,selection):
+def responsehist(result,datemonth):
+    if datemonth is not None and len(datemonth)!=0:            
+            result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
+            month_condition = ((result['month'].isin(datemonth)))
+            result = result.loc[month_condition][['responsetime']]         
     fig = px.histogram(result, x="responsetime", marginal="box")
     fig.update_xaxes( 
         title="Response Time (Minutes)", showgrid=True
@@ -692,22 +697,22 @@ def monthhist(result,selection):
 )
 def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,timerange,responsefilter):
     responsefilter=float(responsefilter)
-    if responsefilter>0:
-        result =  df_o[df_o.responsetime>responsefilter]
-    else:
-        result=df_o
+    result=df_o
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
     elif '29' in emd_card_num:
         emd_card_num.append('34')     
     date_condition = ((result['alarm_date'] >= start_date) & (result['alarm_date'] <= end_date))
+    responsecondition=((result['responsetime']>responsefilter))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
     emd_card_condition = (result.emdCardNumber.str.contains(search_str))
-    
-    result = result.loc[date_condition & emd_card_condition][['alarm_datetime','responsetime']]    
+    if responsefilter>0:
+        result = result.loc[date_condition & emd_card_condition & responsecondition][['alarm_datetime','responsetime']]    
+    else:
+        result = result.loc[date_condition & emd_card_condition][['alarm_datetime','responsetime']]    
     result['alarm_datetime'] = pd.to_datetime(result['alarm_datetime'])
     timemin,timemax=timerange
     timemin=int(timemin)
