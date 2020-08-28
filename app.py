@@ -217,7 +217,7 @@ app.layout = html.Div(
             className="row",
             children=[html.Div(className="div-for-dropdown", style={'text-align': 'center'},
                                             children=[
-                                                dcc.Markdown('Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department.')]),                                   
+                                                dcc.Markdown('Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department. Funding from this work has been provided by the National Science Foundation under awards [CNS-1640624](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1640624) and  [IIS-1814958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1814958). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.')]),                                   
             ]
         ),
     ]
@@ -589,12 +589,15 @@ def responsehist(result,datemonth):
     if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['responsetime']]         
-    fig = px.histogram(result, x="responsetime", marginal="box")
+            result = result.loc[month_condition][['responsetime']]#,'incidentNumber','alarm_datetime','latitude','longitude','emdCardNumber']]         
+    fig = px.histogram(result, x="responsetime",   labels={'responsetime':'Response Time (min)','y':'Count'},  opacity=0.8,marginal="rug" )
     fig.update_xaxes( 
-        title="Response Time (Minutes)", showgrid=True
+        showgrid=True
     )
-    fig.update_layout(plot_bgcolor="#31302F",margin=go.layout.Margin(l=10, r=0, t=0, b=30),paper_bgcolor="#31302F",font=dict(color="white"))
+    fig.update_yaxes( 
+        showgrid=False
+    )
+    fig.update_layout(plot_bgcolor="#31302F",yaxis_title_text='Count',margin=go.layout.Margin(l=10, r=0, t=0, b=30),paper_bgcolor="#31302F",font=dict(color="white"))
     return fig
 
 
