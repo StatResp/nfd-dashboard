@@ -36,7 +36,7 @@ app.title='Incident Dashboard'
  
 
 # load data
-df=dataextract.decompress_pickle('geo_out_july_2020_central_time.pbz2')
+df_o=dataextract.decompress_pickle('geo_out_july_2020_central_time.pbz2')
 
 
    
@@ -143,20 +143,6 @@ app.layout = html.Div(
                                         )
                                     ],
                                 ),
-                        html.Div(className="div-for-dropdown",
-                                    children=[
-                                    dcc.Markdown('''## Filter Incidents By Time of Day'''),
-                                    #html.P("""Select Time Range""",style={'text-align': 'left' ,'font-weight':'bold'}),
-                                    dcc.RangeSlider(
-                                        id='time-slider',
-                                        min=0,
-                                        max=24,
-                                        step=1,
-                                        value=[0, 24],
-                                        marks={i: '{}:00'.format(str(i).zfill(2)) for i in range(0, 25,4)},
-                                    ),
-                                    ]
-                                    ),
                         html.Div(
                                     className="div-for-dropdown",                                    
                                     children=[
@@ -171,9 +157,29 @@ app.layout = html.Div(
                                             ),                                        
                                     ]
                                 ),
-                                
-                                                
-                        
+                        html.Div(className="div-for-dropdown",
+                                    children=[
+                                    dcc.Markdown('''## Filter Incidents By Time of Day'''),
+                                    #html.P("""Select Time Range""",style={'text-align': 'left' ,'font-weight':'bold'}),
+                                    dcc.RangeSlider(
+                                        id='time-slider',
+                                        min=0,
+                                        max=24,
+                                        step=1,
+                                        value=[0, 24],
+                                        marks={i: '{}:00'.format(str(i).zfill(2)) for i in range(0, 25,4)},
+                                    ),
+                                    dcc.Markdown('''##  Filter by Response Time (min).''') ,
+                                    html.Div(children=[dcc.Slider(
+                                                                id='responsetime-value',
+                                                                min=0,
+                                                                max=70,
+                                                                step=0.5,
+                                                                marks={i: '{}'.format(i) for i in range(0, 70,10)},
+                                                                value=0
+                                                            ),],),    
+                                                ]
+                                    ),
                     ],
                 ),
                 # Column for app graphs and plots
@@ -244,22 +250,28 @@ mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMn
     Input("date-picker-end", "date"),    
     Input('emd-card-num-dropdown', 'value'),
     Input("bar-selector", "value"),
-    Input("time-slider", "value"),  Input("severity-basis", "value")
+    Input("time-slider", "value"),  Input("severity-basis", "value"), Input("responsetime-value", "value")
     ]
 )
-def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,severity):
+def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,severity,responsefilter):
   
+    responsefilter=float(responsefilter)
+    if responsefilter>0:
+        result =  df_o[df_o.responsetime>responsefilter]
+    else:
+        result=df_o
+
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
     elif '29' in emd_card_num:
         emd_card_num.append('34')        
-    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
+    date_condition = ((result['alarm_date'] >= start_date) & (result['alarm_date'] <= end_date))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
-    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude']]  
+    emd_card_condition = (result.emdCardNumber.str.contains(search_str))
+    result = result.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude']]  
     result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
     timemin,timemax=timerange
     timemin=int(timemin)
@@ -274,7 +286,7 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange,se
     # if 'severity' in severity:
     #    return "Incident distribution (with severity from 1 to 5) from %s to %s within %s:00 to %s:00 hours. Total %d incidents."%(start_date,end_date,timerange[0],timerange[1],result.size)
     #else:
-    return "Showing %d incidents from %s to %s within %s:00 to %s:00 hours. "%(result.size,start_date,end_date,timerange[0],timerange[1])
+    return "Showing %d incidents from %s to %s within %s:00 to %s:00 hours with responsetime >%s minutes. "%(result.size,start_date,end_date,timerange[0],timerange[1],str(responsefilter))
   
 def transform_severity(emdCardNumber):
     if 'A' in emdCardNumber:
@@ -300,21 +312,26 @@ def transform_severity(emdCardNumber):
     Input("map-graph-radius", "value"),
     Input('emd-card-num-dropdown', 'value'),
     Input("bar-selector", "value"),
-    Input("time-slider", "value"), Input("severity-basis", "value")]
+    Input("time-slider", "value"), Input("severity-basis", "value"),Input("responsetime-value", "value")]
 )
-def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange,severity):
-  
+def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange,severity,responsefilter):
+    responsefilter=float(responsefilter)
+    if responsefilter>0:
+        result =  df_o[df_o.responsetime>responsefilter]
+    else:
+        result=df_o
+
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
     elif '29' in emd_card_num:
         emd_card_num.append('34')           
-    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
+    date_condition = ((result['alarm_date'] >= start_date) & (result['alarm_date'] <= end_date))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
-    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','latitude','longitude','emdCardNumber','responsetime']]  
+    emd_card_condition = (result.emdCardNumber.str.contains(search_str))
+    result = result.loc[date_condition & emd_card_condition][['incidentNumber','alarm_datetime','latitude','longitude','emdCardNumber','responsetime']]  
     result['hour'] = pd.to_datetime(result['alarm_datetime']).dt.hour
     result['severity']=result['emdCardNumber'].apply(lambda x: transform_severity(x))
     timemin,timemax=timerange
@@ -322,18 +339,20 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     timemax=int(timemax)
     if(timemin>0 or timemax<24):
         time_condition=((result['hour']>=timemin)&(result['hour']<=timemax))
-        result = result.loc[time_condition][['alarm_datetime','latitude','longitude','severity','responsetime']]  
+        result = result.loc[time_condition][['incidentNumber','alarm_datetime','latitude','longitude','severity','responsetime','emdCardNumber']]  
     if datemonth is not None and len(datemonth)!=0:            
             result['month'] = pd.to_datetime(result['alarm_datetime']).dt.month
             month_condition = ((result['month'].isin(datemonth)))
-            result = result.loc[month_condition][['latitude','longitude','severity','responsetime']]  
+            result = result.loc[month_condition][['incidentNumber','alarm_datetime','latitude','longitude','severity','responsetime','emdCardNumber']]  
     #use go.Densitymapbox(lat=quakes.Latitude, lon=quakes.Longitude, z=quakes.Magnitude,
     latInitial=36.16228
     lonInitial=-86.774372
+     
     
     #z=result['responsetime']/60,zmax=30,zmin=10
     if 'severity' in severity:
-        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],radius=radius),layout=Layout(
+        fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],customdata=result[['incidentNumber','responsetime','alarm_datetime','severity','emdCardNumber']],
+                hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[4]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}<br> Severity  %{customdata[3]}",radius=radius),layout=Layout(
                 autosize=True,
                 margin=go.layout.Margin(l=0, r=35, t=0, b=0),
                 showlegend=False,
@@ -668,21 +687,26 @@ def monthhist(result,selection):
     Output('histogram', 'figure'),
     [Input("date-picker", "date"),
     Input("date-picker-end", "date"),
-    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value"),Input("histogram-basis","value"),Input("time-slider", "value")]
+    Input('emd-card-num-dropdown', 'value'), Input("bar-selector", "value"),Input("histogram-basis","value"),Input("time-slider", "value"),Input("responsetime-value", "value")]
 )
-def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,timerange):
+def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,timerange,responsefilter):
+    responsefilter=float(responsefilter)
+    if responsefilter>0:
+        result =  df_o[df_o.responsetime>responsefilter]
+    else:
+        result=df_o
     if '1002' in emd_card_num:
         emd_card_num=range(1,136)
     elif '29' in emd_card_num:
         emd_card_num.append('34')     
-    date_condition = ((df['alarm_date'] >= start_date) & (df['alarm_date'] <= end_date))
+    date_condition = ((result['alarm_date'] >= start_date) & (result['alarm_date'] <= end_date))
     string = '[A-Z]'
     updatedlist = [str(x) + string for x in emd_card_num]
     separator = '|'
     search_str = '^' + separator.join(updatedlist)
-    emd_card_condition = (df.emdCardNumber.str.contains(search_str))
+    emd_card_condition = (result.emdCardNumber.str.contains(search_str))
     
-    result = df.loc[date_condition & emd_card_condition][['alarm_datetime','responsetime']]    
+    result = result.loc[date_condition & emd_card_condition][['alarm_datetime','responsetime']]    
     result['alarm_datetime'] = pd.to_datetime(result['alarm_datetime'])
     timemin,timemax=timerange
     timemin=int(timemin)
