@@ -185,7 +185,7 @@ app.layout = html.Div(
                                                        html.P('Time',id='time-text',style={'text-align': 'left','font-weight': 'bold'}),
                                                        html.P('Response',id='response-text',style={'text-align': 'left','font-weight': 'bold'}),
                                                       ],
-                                    )
+                                    ),                                   
                     ],
                 ),
                 # Column for app graphs and plots
@@ -218,14 +218,16 @@ app.layout = html.Div(
                 ),
             ],
         ),
-        html.Div(
-            className="row",
-            children=[html.Div(className="div-for-dropdown", style={'text-align': 'center'},
-                                            children=[
-                                                dcc.Markdown('Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department. Funding for this work has been provided by the National Science Foundation under awards [CNS-1640624](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1640624) and  [IIS-1814958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1814958). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.')]),                                   
-            ]
-        ),
-    ]
+         dcc.Markdown(className="footer",id='footernotices',children=['Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department. Funding for this work has been provided by the National Science Foundation under awards [CNS-1640624](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1640624) and  [IIS-1814958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1814958). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.'],style={'text-align':'justify !important','font-size': 'x-small !important'}),
+        # html.Div(
+        #     className="row",
+        #     children=[html.Div(className="div-for-dropdown", style={'text-align': 'center'},
+        #                                     children=[
+        #                                         dcc.Markdown('Site designed by [ScopeLab from Vanderbilt University](http://scopelab.ai/) starting from [the Uber Ride Demo from Plotly](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo). Data source: Nashville Fire Department. Funding for this work has been provided by the National Science Foundation under awards [CNS-1640624](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1640624) and  [IIS-1814958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1814958). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.')]),                                   
+        #     ]
+        # ),
+    ],
+
 )
 
 
@@ -775,7 +777,7 @@ def update_bar_chart(start_date, end_date, emd_card_num,selection,histogramkind,
 
 # %%
 if __name__ == '__main__':
-	#app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
-    app.server.run(threaded=True)
+	app.run_server(host='0.0.0.0', port=8080, debug=True, use_reloader=False)  
+    #app.server.run(threaded=True)
 
 # %%
