@@ -1,4 +1,4 @@
-incident_dashboard.pyservice: default 
+service: default 
 runtime: python37
 instance_class: B8
 basic_scaling:
