@@ -1,8 +1,8 @@
-service: default 
+incident_dashboard.pyservice: default 
 runtime: python37
 instance_class: B8
 basic_scaling:
-  max_instances: 4
+  max_instances: 2
   idle_timeout: 10m
 #automatic_scaling:
 #  target_cpu_utilization: 0.65
@@ -19,7 +19,7 @@ handlers:
   redirect_http_response_code: 301
 
 
-entrypoint: gunicorn -b 0.0.0.0:8080 app:server
+entrypoint: gunicorn -b 0.0.0.0:8080 --chdir app incident_dashboard:server
 
 
 
