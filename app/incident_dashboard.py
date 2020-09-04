@@ -208,7 +208,7 @@ app.layout = html.Div(
                                                     marks={i: '{}'.format(i) for i in range(1, 11)},
                                                     value=2
                                                 ),],),    
-                        dcc.Graph(id="map-graph"),                        
+                        dcc.Loading(id="loading-icon1",children=[dcc.Graph(id="map-graph"),],type='default'),                       
                         dcc.RadioItems( id='histogram-basis',
                                           options=[                                             
                                               {'label': 'Group By Month', 'value': 'month'},
@@ -219,7 +219,7 @@ app.layout = html.Div(
                                         value='month',style={'text-align': 'center'},
                                     ),
                         #html.Div(className="div-for-dropdown", children=[html.P(id='heatmap-text',style={'text-align': 'center'})]),                       
-                        dcc.Graph(id="histogram"),
+                        dcc.Loading(id="loading-icon2", children=[dcc.Graph(id="histogram"),],type='default'),
                     ],
                 ),
             ],
