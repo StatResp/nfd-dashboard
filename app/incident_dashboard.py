@@ -104,7 +104,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
 
                         html.Div(
-                            className="card p-2 m-2 bg-dark",
+                            className="card p-1 m-1 bg-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## End Date''', style={"margin": "0", "padding": "0"}),
@@ -121,7 +121,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
 
                         html.Div(
-                            className="card p-2 m-2 bg-dark",
+                            className="card p-1 m-1 bg-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## Incident Categories'''),
@@ -152,7 +152,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
                         # Change to side-by-side for mobile layout
                         html.Div(
-                            className="card p-2 m-2 btn-group bg-dark",
+                            className="card p-1 m-1 btn-group bg-dark",
                             children=[
                                 dcc.Markdown('''## Month'''),
                                 # Dropdown to select times
@@ -182,7 +182,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                             ],
                         ),
                         html.Div(
-                            className="card p-2 m-2 bg-dark",
+                            className="card p-1 m-1 bg-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## Days of Week '''),
@@ -236,26 +236,12 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 
                                  ]
                                  ),
-                        html.Div(className="card p-1 m-1 bg-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                                                                             html.P(
-                            'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                            html.P(
-                            'Time', id='time-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                            html.P(
-                            'Response', id='response-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                        ],
-                        )
-                    ],
-                ),
-                # Column for app graphs and plots
-                html.Div(
-                    className="col-12 col-lg-9 p-0 m-0 container-fluid",
-                    children=[
-                        html.Div(className="p-2 m-2 card  bg-dark",
+  
+                        html.Div(className="card p-1 m-1 bg-dark",
                                  children=[
-                                     dcc.Markdown(
+                                        dcc.Markdown(
                                          '''Adjust Slider below to configure the heatmap intensity.'''),
-                                     dcc.Slider(
+                                        dcc.Slider(
                                          id='map-graph-radius',
                                          min=1,
                                          max=10,
@@ -264,6 +250,26 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                                 for i in range(1, 11)},
                                          value=2
                                      ),
+                                 ]
+                        ),
+                        html.Div(className="card p-1 m-1 bg-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                                                                             html.P(
+                            'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                            html.P(
+                            'Time', id='time-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                            html.P(
+                            'Response', id='response-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                        ],
+                        ),
+                    ],
+                ),
+                # Column for app graphs and plots
+                html.Div(
+                    className="col-12 col-lg-9 p-0 m-0 container-fluid",
+                    children=[
+                        html.Div(className="p-2 m-2 card  bg-dark",
+                                 children=[
+                  
                                      dbc.Tabs(id='tabs', active_tab="incidents", children=[
                                          dbc.Tab(label='Incidents Distribution', tab_id='incidents', className="bg-dark text-white", children=[dcc.Loading(
                                              id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
