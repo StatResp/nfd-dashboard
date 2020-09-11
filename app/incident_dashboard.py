@@ -718,22 +718,6 @@ def monthhist(result, datemonth):
         ],
         layout=layout,
     )
-# @app.callback(
-#     Output('histogram-text',"children"),
-#     [Input("histogram-basis","value"),Input("date-picker", "date"),
-#     Input("date-picker-end", "date"),
-#     Input("time-slider", "value")]
-# )
-# def updatehistogramtext(histogramkind,start_date,end_date,timerange):
-#     outputkind=''
-#     if histogramkind=="month":
-#         outputkind= "Histogram by month"
-#     elif histogramkind=="day":
-#         outputkind= "Histogram by day of the week"
-#     elif histogramkind=="hour":
-#         outputkind= "Histogram by hour of the day"
-#     return "Histogram by %s from %s to %s within %s:00 to %s:00 hours."%(outputkind,start_date,end_date,timerange[0],timerange[1])
-
 
 # %%
 @app.callback(
