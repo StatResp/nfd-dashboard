@@ -30,8 +30,80 @@ pd.set_option('display.max_columns', None)
 latInitial = 36.16228
 lonInitial = -86.774372
 
-df = dataextract.decompress_pickle(
-    'data/nfd/geo_out_july_2020_central_time.pbz2')
+def transform_severity(Type_of_Crash):
+    if Type_of_Crash=='Prop Damage (under)':
+        return 1
+    elif Type_of_Crash=='Prop Damage (over)':
+        return 2
+    elif Type_of_Crash=='Suspected Minor Injury':
+        return 3
+    elif Type_of_Crash=='Suspected Serious Injury':
+        return 4
+    elif Type_of_Crash=='Fatal':
+        return 5
+    else:
+        return 0
+
+'''
+df1 = dataextract.decompress_pickle('data/nfd/geo_out_july_2020_central_time.pbz2')
+#df.to_csv("data/nfd/geo_out_july_2020_central_time.pbz2.csv")
+df = pd.read_csv('data/nfd/geo_out_july_2020_central_time.pbz2.csv')
+df['alarm_datetime']=pd.to_datetime(df['alarm_datetime'],format="%Y-%m-%d  %H:%M:%S.%f")
+
+for i in df1.columns:
+    print(i, type(df1.iloc[0][i]))
+    if  type(df.iloc[0][i])!= type(df1.iloc[0][i]): print(i ,'is not the same #########################')
+    #else: print('checked')
+#sys.exit()
+'''
+
+'''
+df = dataextract.decompress_pickle('data/nfd/incident_weather_FRC0_traffic.pbz2')
+df['ID'] = df['ID'].astype(str)
+df['alarm_datetime']=df.apply(lambda ROW: ROW['time'].replace(tzinfo=None), axis=1)
+#df['alarm_date']= df['alarm_datetime'].dt.date 
+df['alarm_date']=df['alarm_datetime'].apply(lambda x: x.strftime("%Y-%m-%d"))
+#df['alarm_time']= df['alarm_datetime'].dt.time 
+df['alarm_time']=df['alarm_datetime'].apply(lambda x: x.strftime("%H:%M:%S.%f"))
+df=df.rename(columns={'day_of_week': 'dayofweek' })
+df=df.rename(columns={'ID': '_id' , 'GPS Coordinate Longitude': 'longitude', 'GPS Coordinate Latitude': 'latitude',
+                       'Type of Crash': 'emdCardNumber', 'year': 'alarm_year'})
+
+#df['alarmDateTime']=df['alarm_datetime'].strftime("%Y-%m-%d  %H:%M:%S.%f")
+df['alarmDateTime']=df['alarm_datetime'].apply(lambda x: x.strftime("%Y-%m-%d  %H:%M:%S.%f"))
+df['arrivalDateTime']=df['alarmDateTime']
+df['weather']='s'
+df['location']='Points'
+df['location.coordinates']='Points'
+df['respondingVehicles']='F'
+df['fireZone']='F'
+df['responsetime']=0
+df['severity']=0
+df['emdCardNumber']='0'
+#df['emdCardNumber']=df.apply(lambda ROW: transform_severity(ROW['Type of Crash']), axis=1)
+print(df)
+df1=                 df[['_id','latitude','longitude','emdCardNumber','alarmDateTime','arrivalDateTime','weather','location','location.coordinates',
+                        'respondingVehicles','fireZone','alarm_datetime','alarm_date','alarm_time','alarm_year','responsetime','month','dayofweek','severity']]
+dataextract.compressed_pickle('data/nfd/incident_weather_FRC0_traffic_nfdFormat', df1)
+
+for i in df.columns:
+    print(i, type(df.iloc[0][i]))                       
+#sys.exit()
+'''
+
+'''
+df1 = dataextract.decompress_pickle('data/nfd/geo_out_july_2020_central_time.pbz2')
+for i in df1.columns:
+    print(i, type(df1.iloc[0][i])) 
+print('---------------------------------------')
+'''
+
+df = dataextract.decompress_pickle('data/nfd/incident_weather_FRC0_traffic_nfdFormat.pbz2')
+print(df)
+for i in df.columns:
+    print(i, type(df.iloc[0][i])) 
+#sys.exit()
+
 
 
 # configure the dates
@@ -42,21 +114,7 @@ enddate = df.alarm_date.max()
 print(startdate, enddate)
 
 
-def transform_severity(emdCardNumber):
-    if 'A' in emdCardNumber:
-        return 2
-    elif 'B' in emdCardNumber:
-        return 3
-    elif 'C' in emdCardNumber:
-        return 4
-    elif 'D' in emdCardNumber:
-        return 5
-    elif 'E' in emdCardNumber:
-        return 6
-    elif 'Ω' in emdCardNumber:
-        return 1
-    else:
-        return 0
+
 
 
 # set the server and global parameters
@@ -128,23 +186,13 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                 dcc.Dropdown(
                                     options=[
                                         #{'label': 'Automatic Crash Notifications', 'value': '34'},
-                                        {'label': 'Motor Vehicle Accidents',
-                                         'value': '29'},
-                                        {'label': 'Breathing Problems',
-                                         'value': '6'},
-                                        {'label': 'Burns', 'value': '7'},
-                                        {'label': 'Cardiac Problems',
-                                         'value': '9'},
-                                        {'label': 'Chest Pain', 'value': '10'},
-                                        {'label': 'Stab/Gunshot', 'value': '27'},
-                                        #{'label': 'Pandemic Flu', 'value': '36'},
-                                        {'label': 'Structure Fire',
-                                         'value': '69'},
-                                        {'label': 'Outside Fire',
-                                         'value': '67'},
-                                        {'label': 'Vehicle Fire', 'value': '71'},
+                                        {'label': 'Prop Damage (under)',     'value': '1'},
+                                        {'label': 'Prop Damage (over)',      'value': '2'},
+                                        {'label': 'Suspected Minor Injury',  'value': '3'},
+                                        {'label': 'Suspected Serious Injury', 'value': '4'},
+                                        {'label': 'Fatal', 'value': '5'},
                                     ],
-                                    value=['29'],
+                                    value=['0'],
                                     id='emd-card-num-dropdown',
                                     multi=True,
                                 ),
@@ -309,6 +357,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 ## Incident Filterings
 
 def return_incidents(start_date, end_date, emd_card_num, months, timerange, responsefilter, days):
+    print(start_date, end_date, emd_card_num, months, timerange, responsefilter, days)
     responsefilter = float(responsefilter)
     date_condition = ((df['alarm_date'] >= start_date)
                       & (df['alarm_date'] <= end_date))
@@ -534,7 +583,7 @@ def hourhist(result, datemonth):
 
     xVal = result['hour']
     yVal = result['count']
-    colorVal = ["#2202d1"]*25
+    colorVal = ["#a10000"]*25
     layout = go.Layout(
         bargap=0.05,
         autosize=True,
@@ -593,7 +642,7 @@ def dayhist(result, datemonth):
     result = result.reindex(dayindex, fill_value=0)
     #print(result.index)
     #print(result)
-    colorVal = ["#2202d1"]*25
+    colorVal = ["#a10000"]*25
     xVal = result['dayofweek']
     yVal = result['count']
     layout = go.Layout(
@@ -663,7 +712,7 @@ def responsehist(result, datemonth):
 
 def monthhist(result, datemonth):
     #result['month'] = result['month'].astype(str)
-    colorVal = ["#2202d1"]*25
+    colorVal = ["#a10000"]*25
     result = result.groupby(['month']).count().reset_index()
     result['count'] = result['_id']
     result['m'] = result['month'].astype(int)
