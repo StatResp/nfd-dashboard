@@ -32,17 +32,17 @@ lonInitial = -86.774372
 
 def transform_severity(Type_of_Crash):
     if Type_of_Crash=='Prop Damage (under)':
-        return '1'
+        return 1
     elif Type_of_Crash=='Prop Damage (over)':
-        return '2'
+        return 2
     elif Type_of_Crash=='Suspected Minor Injury':
-        return '3'
+        return 3
     elif Type_of_Crash=='Suspected Serious Injury':
-        return '4'
+        return 4
     elif Type_of_Crash=='Fatal':
-        return '5'
+        return 5
     else:
-        return '0'
+        return 0
 
 '''
 df1 = dataextract.decompress_pickle('data/nfd/geo_out_july_2020_central_time.pbz2')
@@ -60,7 +60,6 @@ for i in df1.columns:
 '''
 df = dataextract.decompress_pickle('data/nfd/incident_weather_FRC0_traffic.pbz2')
 df['ID'] = df['ID'].astype(str)
-df['Type of Crash_2']=df.apply(lambda ROW: transform_severity(ROW['Type of Crash']), axis=1)
 df['alarm_datetime']=df.apply(lambda ROW: ROW['time'].replace(tzinfo=None), axis=1)
 #df['alarm_date']= df['alarm_datetime'].dt.date 
 df['alarm_date']=df['alarm_datetime'].apply(lambda x: x.strftime("%Y-%m-%d"))
@@ -68,7 +67,7 @@ df['alarm_date']=df['alarm_datetime'].apply(lambda x: x.strftime("%Y-%m-%d"))
 df['alarm_time']=df['alarm_datetime'].apply(lambda x: x.strftime("%H:%M:%S.%f"))
 df=df.rename(columns={'day_of_week': 'dayofweek' })
 df=df.rename(columns={'ID': '_id' , 'GPS Coordinate Longitude': 'longitude', 'GPS Coordinate Latitude': 'latitude',
-                       'Type of Crash_2': 'emdCardNumber', 'year': 'year'})
+                       'Type of Crash': 'emdCardNumber', 'year': 'alarm_year'})
 
 #df['alarmDateTime']=df['alarm_datetime'].strftime("%Y-%m-%d  %H:%M:%S.%f")
 df['alarmDateTime']=df['alarm_datetime'].apply(lambda x: x.strftime("%Y-%m-%d  %H:%M:%S.%f"))
@@ -80,11 +79,11 @@ df['respondingVehicles']='F'
 df['fireZone']='F'
 df['responsetime']=0
 df['severity']=0
-#df['emdCardNumber']='0'
+df['emdCardNumber']='0'
+#df['emdCardNumber']=df.apply(lambda ROW: transform_severity(ROW['Type of Crash']), axis=1)
 print(df)
-
 df1=                 df[['_id','latitude','longitude','emdCardNumber','alarmDateTime','arrivalDateTime','weather','location','location.coordinates',
-                        'alarm_datetime','alarm_date','alarm_time','year','month','dayofweek','severity']]
+                        'respondingVehicles','fireZone','alarm_datetime','alarm_date','alarm_time','alarm_year','responsetime','month','dayofweek','severity']]
 dataextract.compressed_pickle('data/nfd/incident_weather_FRC0_traffic_nfdFormat', df1)
 
 for i in df.columns:
@@ -193,7 +192,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                         {'label': 'Suspected Serious Injury', 'value': '4'},
                                         {'label': 'Fatal', 'value': '5'},
                                     ],
-                                    value=[],
+                                    value=['0'],
                                     id='emd-card-num-dropdown',
                                     multi=True,
                                 ),
@@ -271,6 +270,23 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                  ),
                         html.Div(className="card p-1 m-1 bg-dark",
                                  children=[
+                                     dcc.Markdown(
+                                         '''##  Response Time (min).'''),
+                                     dcc.Slider(
+                                         id='responsetime-value',
+                                         min=0,
+                                         max=70,
+                                         step=0.5,
+                                         marks={i: '{}'.format(
+                                             i) for i in range(0, 70, 10)},
+                                         value=0
+                                     ),
+
+                                 ]
+                                 ),
+  
+                        html.Div(className="card p-1 m-1 bg-dark",
+                                 children=[
                                         dcc.Markdown(
                                          '''Adjust Slider below to configure the heatmap intensity.'''),
                                         dcc.Slider(
@@ -289,6 +305,8 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                             'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                             html.P(
                             'Time', id='time-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                            html.P(
+                            'Response', id='response-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                         ],
                         ),
                     ],
@@ -309,14 +327,14 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 
                         html.Div(className="p-0 m-0 card bg-dark", children=[
                             dbc.Tabs(id='histogram-basis', active_tab="month", children=[
-                                 dbc.Tab(label='Distribution by Year',
-                                         tab_id='year', className="bg-dark text-white"),                                
                                  dbc.Tab(label='Distribution by Month',
                                          tab_id='month', className="bg-dark text-white"),
                                  dbc.Tab(label='Distribution by Weekday',
                                          tab_id='day', className="bg-dark text-white"),
                                  dbc.Tab(label='Distribution by Time of Day',
                                          tab_id='hour', className="bg-dark text-white"),
+                                 dbc.Tab(label='Response Time Histogram',
+                                         tab_id='response', className="bg-dark text-white"),
                                  ]),
                             dcc.Loading(id="loading-icon2", className="flex-grow-1",
                                         children=[dcc.Graph(id="histogram"), ], type='default'),
@@ -338,10 +356,15 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 
 ## Incident Filterings
 
-def return_incidents(start_date, end_date, emd_card_num, months, timerange, days):
-    print(start_date, end_date, emd_card_num, months, timerange, days)
+def return_incidents(start_date, end_date, emd_card_num, months, timerange, responsefilter, days):
+    print(start_date, end_date, emd_card_num, months, timerange, responsefilter, days)
+    responsefilter = float(responsefilter)
     date_condition = ((df['alarm_date'] >= start_date)
                       & (df['alarm_date'] <= end_date))
+    if responsefilter > 0:
+       responsecondition = ((df['responsetime'] > responsefilter))
+    else:
+       responsecondition = (True)
     if days is None or len(days) == 0:
         weekday_condition = (True)
     else:
@@ -349,7 +372,13 @@ def return_incidents(start_date, end_date, emd_card_num, months, timerange, days
     if emd_card_num is None or len(emd_card_num) == 0:
         emd_card_condition = (True)
     else:
-        emd_card_condition = (df['emdCardNumber'].isin(emd_card_num))
+        if '29' in emd_card_num:
+            emd_card_num.append('34')
+        string = '[A-Z]'
+        updatedlist = [str(x) + string for x in emd_card_num]
+        separator = '|'
+        search_str = '^' + separator.join(updatedlist)
+        emd_card_condition = (df.emdCardNumber.str.contains(search_str))
     if months is None or len(months) == 0:
         month_condition = True
     else:
@@ -367,25 +396,29 @@ def return_incidents(start_date, end_date, emd_card_num, months, timerange, days
     timecondition = ((df['alarm_datetime'].dt.time >= starttime)
                      & (df['alarm_datetime'].dt.time <= endtime))
 
-    return df[emd_card_condition & date_condition & month_condition & weekday_condition & timecondition]
+    return df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition]
 
 
 ############ Process
 
 @app.callback(
-    [Output('incident-text', "children"), Output('month-text', "children"), Output('time-text', "children"), Output(component_id='time-text', component_property='style'), Output(component_id='month-text', component_property='style')],
+    [Output('incident-text', "children"), Output('month-text', "children"), Output('time-text', "children"), Output('response-text', "children"), Output(component_id='response-text',
+                                                                                                                                                         component_property='style'), Output(component_id='time-text', component_property='style'), Output(component_id='month-text', component_property='style')],
     [Input("date-picker", "date"),
      Input("date-picker-end", "date"),
      Input('emd-card-num-dropdown', 'value'),
      Input("month-selector", "value"),
-     Input("time-slider", "value"),
-     Input("day-selector", "value"),
+     Input("time-slider", "value"),  Input("responsetime-value",
+                                           "value"), Input("day-selector", "value"),
      ]
 )
-def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange, days):
-    result = return_incidents(start_date, end_date, emd_card_num, datemonth, timerange, days)
+def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days):
+
+    result = return_incidents(
+        start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)
     timemin, timemax = timerange
-    return "Incidents: %d" % (result.size), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
+
+    return "Incidents: %d" % (result.size), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
 
 
 viridis = cm.get_cmap('RdYlGn', 20000)
@@ -478,12 +511,11 @@ def return_empty_fig():
      Input("map-graph-radius", "value"),
      Input('emd-card-num-dropdown', 'value'),
      Input("month-selector", "value"),
-     Input("time-slider", "value"),
-      Input("day-selector", "value")]
+     Input("time-slider", "value"), Input("responsetime-value", "value"), Input("day-selector", "value")]
 )
-def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange, days):
+def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, timerange, responsefilter, days):
     result = return_incidents(
-        start_date, end_date, emd_card_num, datemonth, timerange, days)
+        start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)
     fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],
                                      #customdata=result[['incidentNumber','responsetime','alarm_datetime','severity','emdCardNumber']],
                                      #hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[4]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}<br> Severity  %{customdata[3]}",
@@ -663,72 +695,19 @@ def dayhist(result, datemonth):
     )
 
 
-def yearhist(result, datemonth):
-    #result['month'] = result['month'].astype(str)
-    colorVal = ["#a10000"]*25
-    result = result.groupby(['year']).count().reset_index()
-    print(result)
-    result['count'] = result['_id']
-    result['y'] = result['year'].astype(int)
-    monthindex = range(2017, 2021)
-    for year in list(range(2017, 2021)):
-        if year not in result['y'].values:
-            new_row = {'y': year, 'year': str(year), 'count': 0}
-            result = result.append(new_row, ignore_index=True)
-    print(result)
-    result = result.sort_values('y')
-    xVal = result['year']
-    yVal = result['count']
-    print(xVal)
-    print(yVal)
+def responsehist(result, datemonth):
 
-    layout = go.Layout(
-        bargap=0.1,
-        bargroupgap=0,
-        barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
-        showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
-        dragmode="select",
-        font=dict(color="white"),
-        xaxis=dict(
-            range=[2016, 2021],
-            showgrid=False,
-            tickvals=[2017, 2018, 2019, 2020],
-            ticktext=['2017', '2018', '2019', '2020'],
-            fixedrange=True,
-            ticksuffix="",
-        ),
-        yaxis=dict(
-            range=[0, max(yVal) + max(yVal) / 4],
-            showticklabels=False,
-            showgrid=False,
-            fixedrange=True,
-            rangemode="nonnegative",
-            zeroline=False,
-        ),
-        annotations=[
-            dict(
-                x=xi,
-                y=yi,
-                text=str(yi),
-                xanchor="center",
-                yanchor="bottom",
-                showarrow=False,
-                font=dict(color="white"),
-            )
-            for xi, yi in zip(xVal, yVal)
-        ],
+    fig = px.histogram(result, x="responsetime",   labels={
+                       'responsetime': 'Response Time (min)', 'y': 'Count'},  opacity=0.8, marginal="rug")
+    fig.update_xaxes(
+        showgrid=True
     )
-
-    return go.Figure(
-        data=[
-            go.Bar(x=xVal, y=yVal, marker=dict(
-                color=np.array(colorVal)), hoverinfo="x"),
-        ],
-        layout=layout,
+    fig.update_yaxes(
+        showgrid=False
     )
+    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Count', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"))
+    return fig
 
 
 def monthhist(result, datemonth):
@@ -800,22 +779,19 @@ def monthhist(result, datemonth):
     Output('histogram', 'figure'),
     [Input("date-picker", "date"),
      Input("date-picker-end", "date"),
-     Input('emd-card-num-dropdown', 'value'),
-     Input("month-selector", "value"),
-     Input("histogram-basis", "active_tab"),
-     Input("time-slider", "value"),
-     Input("day-selector", "value")]
+     Input('emd-card-num-dropdown', 'value'), Input("month-selector", "value"), Input("histogram-basis", "active_tab"), Input("time-slider", "value"), Input("responsetime-value", "value"), Input("day-selector", "value")]
 )
-def update_bar_chart(start_date, end_date, emd_card_num, datemonth, histogramkind, timerange, days):
-    result = return_incidents(start_date, end_date, emd_card_num, datemonth, timerange, days)
+def update_bar_chart(start_date, end_date, emd_card_num, datemonth, histogramkind, timerange, responsefilter, days):
+    result = return_incidents(
+        start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)
     if histogramkind == "month":
         return monthhist(result, datemonth)
     elif histogramkind == "day":
         return dayhist(result, datemonth)
     elif histogramkind == "hour":
         return hourhist(result, datemonth)
-    elif histogramkind == "year":
-        return yearhist(result, datemonth)
+    elif histogramkind == "response":
+        return responsehist(result, datemonth)
 
 
 # %%
