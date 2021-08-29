@@ -11,9 +11,14 @@ def compressed_pickle(title, data):
 
 # Load any compressed pickle file
 def decompress_pickle(file):
- data = bz2.BZ2File(file, 'rb')
- data = cPickle.load(data)
- return data
+    with bz2.open(file, "rb") as f:
+    # Decompress data from file
+        tempdata = f.read()
+        with open("tempdata", "wb") as f:
+    # Write compressed data to file
+            f.write(tempdata)        
+    data=pd.read_pickle("tempdata")
+    return data
 
 
 

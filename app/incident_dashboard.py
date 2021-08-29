@@ -2,7 +2,9 @@
 from matplotlib import cm, colors
 import dash
 import flask
+import pyarrow.parquet as pq
 import os
+from dask import dataframe as dd
 from random import randint
 import dash_core_components as dcc
 import dash_html_components as html
@@ -30,13 +32,17 @@ pd.set_option('display.max_columns', None)
 latInitial = 36.16228
 lonInitial = -86.774372
 
-df = dataextract.decompress_pickle(
-    'data/nfd/geo_out_july_2020_central_time.pbz2')
+#table2 = pq.read_table('data/nfd/incidents_july_2020_2.parquet')
 
+#df = dataextract.decompress_pickle(
+#    'data/nfd/geo_out_july_2020_central_time.pbz2')
 
+#df =table2.to_pandas()
+df= dd.read_parquet('data/nfd/incidents_july_2020_2.parquet')  
+df['time']=df['alarm_datetime'].dt.hour*3600+df['alarm_datetime'].dt.minute*60+df['alarm_datetime'].dt.second
 # configure the dates
-startdate = df.alarm_date.min()
-enddate = df.alarm_date.max()
+startdate = df.alarm_date.min().compute()
+enddate = df.alarm_date.max().compute()
 #df['alarm_datetime'] = pd.to_datetime(df.alarm_datetime)
 
 print(startdate, enddate)
@@ -307,47 +313,71 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 
 
 ## Incident Filterings
-
+import dateparser, traceback
 def return_incidents(start_date, end_date, emd_card_num, months, timerange, responsefilter, days):
     responsefilter = float(responsefilter)
-    date_condition = ((df['alarm_date'] >= start_date)
-                      & (df['alarm_date'] <= end_date))
-    if responsefilter > 0:
-       responsecondition = ((df['responsetime'] > responsefilter))
-    else:
-       responsecondition = (True)
-    if days is None or len(days) == 0:
-        weekday_condition = (True)
-    else:
-        weekday_condition = ((df['dayofweek']).isin(days))
-    if emd_card_num is None or len(emd_card_num) == 0:
-        emd_card_condition = (True)
-    else:
-        if '29' in emd_card_num:
-            emd_card_num.append('34')
-        string = '[A-Z]'
-        updatedlist = [str(x) + string for x in emd_card_num]
-        separator = '|'
-        search_str = '^' + separator.join(updatedlist)
-        emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-    if months is None or len(months) == 0:
-        month_condition = True
-    else:
-        month_condition = ((df['month'].isin(months)))
-    timemin, timemax = timerange
-    hourmax = int(timemax)
-    hourmin = int(timemin)
-    if hourmax == 24:
-        endtime = (tt(23, 59, 59))
-    else:
-        minutesmax = int(60*(timemax-hourmax))
-        endtime = (tt(hourmax, minutesmax, 0))
-    minutesmin = int(60*(timemin-hourmin))
-    starttime = (tt(hourmin, minutesmin, 0))
-    timecondition = ((df['alarm_datetime'].dt.time >= starttime)
-                     & (df['alarm_datetime'].dt.time <= endtime))
-
-    return df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition]
+    
+    
+    start_date=dateparser.parse(start_date)
+    end_date=dateparser.parse(end_date)
+    
+    #print(type(start_date),start_date)
+    
+    #print(df.dtypes)
+    
+    try:
+        date_condition = ((df['alarm_date'] >= start_date)
+                          & (df['alarm_date'] <= end_date))
+        
+        #print("set date condition")
+        if responsefilter > 0:
+           responsecondition = ((df['responsetime'] > responsefilter))
+        else:
+           responsecondition = (True)
+        if days is None or len(days) == 0:
+            weekday_condition = (True)
+        else:
+            weekday_condition = ((df['dayofweek']).isin(days))
+        if emd_card_num is None or len(emd_card_num) == 0:
+            emd_card_condition = (True)
+        else:
+            if '29' in emd_card_num:
+                emd_card_num.append('34')
+            string = '[A-Z]'
+            updatedlist = [str(x) + string for x in emd_card_num]
+            separator = '|'
+            search_str = '^' + separator.join(updatedlist)
+            emd_card_condition = (df.emdCardNumber.str.contains(search_str))
+        if months is None or len(months) == 0:
+            month_condition = True
+        else:
+            month_condition = ((df['month'].isin(months)))
+        timemin, timemax = timerange
+        hourmax = int(timemax)
+        hourmin = int(timemin)
+        
+        #print("going to set time condition")
+        
+        if hourmax == 24:
+            endtime = (tt(23, 59, 59))
+            endtime = 23*3600+59*60 +59
+        else:
+            minutesmax = int(60*(timemax-hourmax))            
+            endtime = hourmax*3600+minutesmax*60 
+        minutesmin = int(60*(timemin-hourmin))         
+        starttime=hourmin*3600+minutesmin*60
+        
+        #print(type(starttime),starttime)
+        
+        timecondition = ((df['time'] >= starttime)
+                         & (df['time'] <= endtime))          
+        result=df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition].compute()
+    except Exception:
+        print("Exception in user code:")
+        traceback.print_exc(file=sys.stdout)
+        
+    #print(result)
+    return result
 
 
 ############ Process
