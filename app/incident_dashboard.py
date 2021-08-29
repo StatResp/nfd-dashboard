@@ -46,10 +46,9 @@ df['dayofweek']=df['alarm_datetime'].dt.dayofweek
 startdate = df.alarm_date.min().compute()
 enddate = df.alarm_date.max().compute()
 #df['alarm_datetime'] = pd.to_datetime(df.alarm_datetime)
-print(df.head(2))
+#print(df.head(2))
 print(startdate, enddate)
-
-print(df.dtypes)
+#print(df.dtypes)
 
 def transform_severity(emdCardNumber):
     if 'A' in emdCardNumber:
