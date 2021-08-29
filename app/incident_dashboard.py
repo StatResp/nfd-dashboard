@@ -39,16 +39,17 @@ lonInitial = -86.774372
 #    'data/nfd/geo_out_july_2020_central_time.pbz2')
 
 #df =table2.to_pandas()
-df= dd.read_parquet('data/nfd/incidents_july_2020_2.parquet')  
+df= dd.read_parquet('data/nfd/nfdincidents_till_July2021.parquet',engine='pyarrow')  
 df['time']=df['alarm_datetime'].dt.hour*3600+df['alarm_datetime'].dt.minute*60+df['alarm_datetime'].dt.second
+df['dayofweek']=df['alarm_datetime'].dt.dayofweek
 # configure the dates
 startdate = df.alarm_date.min().compute()
 enddate = df.alarm_date.max().compute()
 #df['alarm_datetime'] = pd.to_datetime(df.alarm_datetime)
-
+print(df.head(2))
 print(startdate, enddate)
 
-
+print(df.dtypes)
 
 def transform_severity(emdCardNumber):
     if 'A' in emdCardNumber:
@@ -563,7 +564,7 @@ def hourhist(result, datemonth):
 
     result['hour'] = result['alarm_datetime'].dt.hour
     result = result.groupby(['hour']).count().reset_index()
-    result['count'] = result['_id']
+    result['count'] = result['incidentNumber']
     result['h'] = result['hour'].astype(int)
 
     for hour in list(range(0, 24)):
@@ -627,7 +628,7 @@ def hourhist(result, datemonth):
 
 def dayhist(result, datemonth):
     result = result.groupby(['dayofweek']).count().reset_index()
-    result['count'] = result['_id']
+    result['count'] = result['incidentNumber']
     dayindex = range(0, 7)
     result = result.reindex(dayindex, fill_value=0)
     #print(result.index)
@@ -704,7 +705,7 @@ def monthhist(result, datemonth):
     #result['month'] = result['month'].astype(str)
     colorVal = ["#2202d1"]*25
     result = result.groupby(['month']).count().reset_index()
-    result['count'] = result['_id']
+    result['count'] = result['incidentNumber']
     result['m'] = result['month'].astype(int)
     monthindex = range(1, 13)
     for month in list(range(1, 13)):
