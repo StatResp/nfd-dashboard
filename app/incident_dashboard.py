@@ -4,6 +4,7 @@ import dash
 import flask
 import pyarrow.parquet as pq
 import os
+from flask_caching import Cache
 from dask import dataframe as dd
 from random import randint
 import dash_core_components as dcc
@@ -48,6 +49,7 @@ enddate = df.alarm_date.max().compute()
 print(startdate, enddate)
 
 
+
 def transform_severity(emdCardNumber):
     if 'A' in emdCardNumber:
         return 2
@@ -71,6 +73,10 @@ server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=[dbc.themes.BOOTSTRAP], server=server, meta_tags=[
                 {"name": "viewport", "content": "width=device-width"}])
 app.title = 'Incident Dashboard'
+
+cache = Cache(app.server,
+              config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
+
 
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 px.set_mapbox_access_token(mapbox_access_token)
@@ -314,6 +320,9 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 
 ## Incident Filterings
 import dateparser, traceback
+
+
+@cache.memoize()
 def return_incidents(start_date, end_date, emd_card_num, months, timerange, responsefilter, days):
     responsefilter = float(responsefilter)
     
