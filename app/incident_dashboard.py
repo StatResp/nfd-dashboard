@@ -49,8 +49,8 @@ df['month-year']=df['alarm_datetime'].dt.strftime('%b %Y')
 startdate = df.alarm_date.min().compute()
 enddate = df.alarm_date.max().compute()
 #df['alarm_datetime'] = pd.to_datetime(df.alarm_datetime)
-print(df.head(2))
-print(startdate, enddate)
+#print(df.head(2))
+#print(startdate, enddate)
 #print(df.dtypes)
 
 def transform_severity(emdCardNumber):
@@ -298,6 +298,8 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 
                         html.Div(className="p-0 m-0 card bg-dark", children=[
                             dbc.Tabs(id='histogram-basis', active_tab="month", children=[
+                                 dbc.Tab(label='Incident Frequency',
+                                         tab_id='totals', className="bg-dark text-white"),
                                  dbc.Tab(label='Distribution by Month',
                                          tab_id='month', className="bg-dark text-white"),
                                  dbc.Tab(label='Distribution by Weekday',
@@ -743,13 +745,17 @@ def update_map_incidents_month(start_date, end_date, radius, emd_card_num, datem
         "x": 0.45,
         "xanchor": "left",
         "y": 0.02,
-        "yanchor": "bottom"
+        "yanchor": "bottom",
+        "bgcolor": "#1E1E1E",
+        "borderwidth": 1,
+        "bordercolor":"#6d6d6d",
+        "font": {"color": "#FFFFFF"}
     }
 ]
     for k in range(len(fig.frames)):
-        fig.frames[k]['layout'].update(title_text=f'{monthlist[k]}')
+        fig.frames[k]['layout'].update(title_text=f'<b>{monthlist[k]}</b>')
         fig.frames[k]['layout'].update(title_x=0.1)
-        fig.frames[k]['layout'].update(title_font=dict( family='Courier New, monospace',size=18))        
+        fig.frames[k]['layout'].update(title_font=dict( family='Arial Black',size=18))        
         fig.frames[k]['layout'].update(title_y=0.92)                
         fig.frames[k]['layout'].update(title_yanchor="bottom")
         fig.frames[k]['layout'].update(title_xanchor="left")
@@ -960,6 +966,68 @@ def monthhist(result, datemonth):
         layout=layout,
     )
 
+def totals(result, datemonth):
+    #result['month'] = result['month'].astype(str)
+    #colorVal = ["#2202d1"]*25
+
+    resultgroup=result.groupby('month-year').agg({'incidentNumber': 'count', 'alarm_datetime': 'first'})
+    resultgroup=resultgroup.reset_index()
+    resultgroup=resultgroup.sort_values(by=['alarm_datetime'])
+    #result = result.groupby(['month-year']).count().reset_index()   
+    #result['count'] = result['incidentNumber']
+    fig = px.line(resultgroup, x="month-year", y="incidentNumber", title='Total Incidents')
+    fig.update_xaxes(
+        showgrid=True
+    )
+    fig.update_yaxes(
+        showgrid=False
+    )
+    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Count', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"))
+    # xVal = result['month-year']
+    # yVal = result['count']
+    # fig.update_layout
+    # layout = go.Layout(
+    #     bargap=0.1,
+    #     bargroupgap=0,
+    #     barmode="group",
+    #     margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+    #     showlegend=False,
+    #     plot_bgcolor="#31302F",
+    #     paper_bgcolor="#31302F",
+    #     dragmode="select",
+    #     font=dict(color="white"),
+    #     yaxis=dict(
+    #         range=[0, max(yVal) + max(yVal) / 4],
+    #         showticklabels=False,
+    #         showgrid=False,
+    #         fixedrange=True,
+    #         rangemode="nonnegative",
+    #         zeroline=False,
+    #     ),
+    #     annotations=[
+    #         dict(
+    #             x=xi,
+    #             y=yi,
+    #             text=str(yi),
+    #             xanchor="center",
+    #             yanchor="bottom",
+    #             showarrow=False,
+    #             font=dict(color="white"),
+    #         )
+    #         for xi, yi in zip(xVal, yVal)
+    #     ],
+    # )
+
+    # return go.Figure(
+    #     data=[
+    #         go.Bar(x=xVal, y=yVal, marker=dict(
+    #             color=np.array(colorVal)), hoverinfo="x"),
+    #     ],
+    #     layout=layout,
+    #)
+    return fig
+
 # %%
 @app.callback(
     Output('histogram', 'figure'),
@@ -972,6 +1040,8 @@ def update_bar_chart(start_date, end_date, emd_card_num, datemonth, histogramkin
         start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)
     if histogramkind == "month":
         return monthhist(result, datemonth)
+    elif histogramkind == "totals":
+        return totals(result, datemonth)
     elif histogramkind == "day":
         return dayhist(result, datemonth)
     elif histogramkind == "hour":
