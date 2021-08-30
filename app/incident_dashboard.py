@@ -42,11 +42,14 @@ lonInitial = -86.774372
 df= dd.read_parquet('data/nfd/nfdincidents_till_July2021.parquet',engine='pyarrow')  
 df['time']=df['alarm_datetime'].dt.hour*3600+df['alarm_datetime'].dt.minute*60+df['alarm_datetime'].dt.second
 df['dayofweek']=df['alarm_datetime'].dt.dayofweek
+df['month-year']=df['alarm_datetime'].dt.strftime('%b %Y')
+
+#df['month-year']=df['alarm_year'].apply(str,meta=('str'))+'-'+df['month'].apply(str,meta=('str'))
 # configure the dates
 startdate = df.alarm_date.min().compute()
 enddate = df.alarm_date.max().compute()
 #df['alarm_datetime'] = pd.to_datetime(df.alarm_datetime)
-#print(df.head(2))
+print(df.head(2))
 print(startdate, enddate)
 #print(df.dtypes)
 
@@ -285,6 +288,10 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                      dbc.Tabs(id='tabs', active_tab="incidents", children=[
                                          dbc.Tab(label='Incidents Distribution', tab_id='incidents', className="bg-dark text-white", children=[dcc.Loading(
                                              id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
+                                        dbc.Tab(label='Incidents by Month', tab_id='incidents-month', className="bg-dark text-white", children=[dcc.Loading(
+                                             id="loading-icon-incidents-month", children=[dcc.Graph(id="map-incidents-month"), ], type='default')]),
+                                         dbc.Tab(label='Response Distribution (min)', tab_id='response', className="bg-dark text-white", children=[dcc.Loading(
+                                             id="loading-icon-map-response", children=[dcc.Graph(id="map-response"), ], type='default')])
                                      ]
                                      ),
                                  ]),
@@ -558,6 +565,166 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     )
     return fig
 
+
+@app.callback(
+    Output('map-response', 'figure'),
+    [Input("date-picker", "date"),
+     Input("date-picker-end", "date"),
+     Input("map-graph-radius", "value"),
+     Input('emd-card-num-dropdown', 'value'),
+     Input("month-selector", "value"),
+     Input("time-slider", "value"), Input("responsetime-value", "value"), Input("day-selector", "value")]
+)
+def update_map_response(start_date, end_date, radius, emd_card_num, datemonth, timerange, responsefilter, days):
+    result = return_incidents(
+        start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)
+
+    
+    
+
+    fig = px.scatter_mapbox(result, lat="latitude", lon="longitude",color="responsetime",hover_data=['incidentNumber','latitude','longitude','alarm_datetime','responsetime'], range_color=[0,40] , mapbox_style="open-street-map",
+                  color_continuous_scale=px.colors.sequential.Hot)
+
+
+    fig.update_layout(autosize=True,
+        margin=go.layout.Margin(l=0, r=35, t=0, b=0),
+        showlegend=False,
+        mapbox=dict(
+            accesstoken=mapbox_access_token,
+            # 40.7272  # -73.991251
+                    center=dict(lat=latInitial, lon=lonInitial),
+                    style=mapbox_style,
+                    bearing=0,
+                    zoom=10,
+                    ),
+        updatemenus=[
+            dict(
+                buttons=(
+                    [
+                        dict(
+                            args=[
+                                {
+                                    "mapbox.zoom": 10,
+                                    "mapbox.center.lon": lonInitial,
+                                    "mapbox.center.lat": latInitial,
+                                    "mapbox.bearing": 0,
+                                    "mapbox.style": mapbox_style,
+                                }
+                            ],
+                            label="Reset Zoom",
+                            method="relayout",
+                        )
+                    ]
+                ),
+                direction="left",
+                pad={"r": 0, "t": 0, "b": 0, "l": 0},
+                showactive=False,
+                type="buttons",
+                x=0.45,
+                y=0.02,
+                xanchor="left",
+                yanchor="bottom",
+                bgcolor="#1E1E1E",
+                borderwidth=1,
+                bordercolor="#6d6d6d",
+                font=dict(color="#FFFFFF"),
+            ),
+        ],
+    )
+
+    return fig
+
+
+@app.callback(
+    Output('map-incidents-month', 'figure'),
+    [Input("date-picker", "date"),
+     Input("date-picker-end", "date"),
+     Input("map-graph-radius", "value"),
+     Input('emd-card-num-dropdown', 'value'),
+     Input("month-selector", "value"),
+     Input("time-slider", "value"), Input("responsetime-value", "value"), Input("day-selector", "value")]
+)
+def update_map_incidents_month(start_date, end_date, radius, emd_card_num, datemonth, timerange, responsefilter, days):
+    result = return_incidents(
+        start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)    
+    fig = px.scatter_mapbox(result, color="responsetime",range_color=[0,40], animation_frame='month-year', lat="latitude", lon="longitude", hover_data=['incidentNumber','latitude','longitude','alarm_datetime','responsetime'],  mapbox_style="open-street-map",color_continuous_scale=px.colors.sequential.Hot)
+    fig.update_layout(autosize=True,
+        margin=go.layout.Margin(l=0, r=35, t=0, b=0),
+        showlegend=False,
+        mapbox=dict(
+            accesstoken=mapbox_access_token,
+            # 40.7272  # -73.991251
+                    center=dict(lat=latInitial, lon=lonInitial),
+                    style=mapbox_style,
+                    bearing=0,
+                    zoom=10,
+                    ),
+        updatemenus=[
+            dict(
+                buttons=(
+                    [
+                        dict(
+                            args=[
+                                {
+                                    "mapbox.zoom": 10,
+                                    "mapbox.center.lon": lonInitial,
+                                    "mapbox.center.lat": latInitial,
+                                    "mapbox.bearing": 0,
+                                    "mapbox.style": mapbox_style,
+                                }
+                            ],
+                            label="Reset Zoom",
+                            method="relayout",
+                        ),
+                        dict(label="Play",
+                          method="animate",
+                          args=[None]),
+                    ]
+                ),
+                direction="left",
+                pad={"r": 0, "t": 0, "b": 0, "l": 0},
+                showactive=False,
+                type="buttons",
+                x=0.45,
+                y=0.02,
+                xanchor="left",
+                yanchor="bottom",
+                bgcolor="#1E1E1E",
+                borderwidth=1,
+                bordercolor="#6d6d6d",
+                font=dict(color="#FFFFFF"),
+            ),
+        ],
+    )
+    fig['layout']['updatemenus'][0]['pad']=dict(r= 0, t= 0)
+    fig['layout']['sliders'][0]['pad']=dict(r= 0, t= 0)
+    fig["layout"]["updatemenus"] = [
+    {
+        "buttons": [
+            {
+                "args": [None, {"fromcurrent":True}],
+                "label": "Play",
+                "method": "animate"
+            },
+            {
+                "args": [[None], {"frame": {"duration": 0, "redraw": False},
+                                  "mode": "immediate",
+                                  "transition": {"duration": 0}}],
+                "label": "Pause",
+                "method": "animate"
+            }
+        ],
+        "direction": "left",
+        "pad": {"r": 10, "t": 0},
+        "showactive": False,
+        "type": "buttons",
+        "x": 0.1,
+        "xanchor": "right",
+        "y": 0,
+        "yanchor": "top"
+    }
+]
+    return fig
 
 def hourhist(result, datemonth):
 
