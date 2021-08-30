@@ -286,11 +286,11 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                  children=[
                   
                                      dbc.Tabs(id='tabs', active_tab="incidents", children=[
-                                         dbc.Tab(label='Incidents Distribution', tab_id='incidents', className="bg-dark text-white", children=[dcc.Loading(
+                                         dbc.Tab(label='Incidents Total', tab_id='incidents', className="bg-dark text-white", children=[dcc.Loading(
                                              id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
                                         dbc.Tab(label='Incidents by Month', tab_id='incidents-month', className="bg-dark text-white", children=[dcc.Loading(
                                              id="loading-icon-incidents-month", children=[dcc.Graph(id="map-incidents-month"), ], type='default')]),
-                                         dbc.Tab(label='Response Distribution (min)', tab_id='response', className="bg-dark text-white", children=[dcc.Loading(
+                                         dbc.Tab(label='Response (min)', tab_id='response', className="bg-dark text-white", children=[dcc.Loading(
                                              id="loading-icon-map-response", children=[dcc.Graph(id="map-response"), ], type='default')])
                                      ]
                                      ),
