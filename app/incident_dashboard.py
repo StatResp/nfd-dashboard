@@ -175,18 +175,18 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                     id="month-selector",
                                     options=[
 
-                                        {'label': 'Jan', 'value': '1'},
-                                        {'label': 'Feb', 'value': '2'},
-                                        {'label': 'Mar', 'value': '3'},
-                                        {'label': 'Apr', 'value': '4'},
-                                        {'label': 'May', 'value': '5'},
-                                        {'label': 'June', 'value': '6'},
-                                        {'label': 'July', 'value': '7'},
-                                        {'label': 'Aug', 'value': '8'},
-                                        {'label': 'Sep', 'value': '9'},
-                                        {'label': 'Oct', 'value': '10'},
-                                        {'label': 'Nov', 'value': '11'},
-                                        {'label': 'Dec', 'value': '12'},
+                                        {'label': 'Jan', 'value': 1},
+                                        {'label': 'Feb', 'value': 2},
+                                        {'label': 'Mar', 'value': 3},
+                                        {'label': 'Apr', 'value': 4},
+                                        {'label': 'May', 'value': 5},
+                                        {'label': 'June', 'value': 6},
+                                        {'label': 'July', 'value': 7},
+                                        {'label': 'Aug', 'value': 8},
+                                        {'label': 'Sep', 'value': 9},
+                                        {'label': 'Oct', 'value': 10},
+                                        {'label': 'Nov', 'value': 11},
+                                        {'label': 'Dec', 'value': 12},
 
 
                                     ], multi=True,
@@ -206,13 +206,13 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                     id="day-selector",
                                     options=[
 
-                                        {'label': 'Mon', 'value': '0'},
-                                        {'label': 'Tue', 'value': '1'},
-                                        {'label': 'Wed', 'value': '2'},
-                                        {'label': 'Thur', 'value': '3'},
-                                        {'label': 'Fri', 'value': '4'},
-                                        {'label': 'Sat', 'value': '5'},
-                                        {'label': 'Sun', 'value': '6'},
+                                        {'label': 'Mon', 'value': 0},
+                                        {'label': 'Tue', 'value': 1},
+                                        {'label': 'Wed', 'value': 2},
+                                        {'label': 'Thur', 'value': 3},
+                                        {'label': 'Fri', 'value': 4},
+                                        {'label': 'Sat', 'value': 5},
+                                        {'label': 'Sun', 'value': 6},
                                     ],
                                     multi=True,
                                 )
@@ -300,14 +300,22 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                             dbc.Tabs(id='histogram-basis', active_tab="month", children=[
                                  dbc.Tab(label='Incident Frequency',
                                          tab_id='totals', className="bg-dark text-white"),
-                                 dbc.Tab(label='Distribution by Month',
+                                 dbc.Tab(label='Incidents by Month',
                                          tab_id='month', className="bg-dark text-white"),
-                                 dbc.Tab(label='Distribution by Weekday',
+                                 dbc.Tab(label='Incidents by Weekday',
                                          tab_id='day', className="bg-dark text-white"),
-                                 dbc.Tab(label='Distribution by Time of Day',
+                                 dbc.Tab(label='Incidents by Time of Day',
                                          tab_id='hour', className="bg-dark text-white"),
-                                 dbc.Tab(label='Response Time Histogram',
+                                 dbc.Tab(label='Response Time',
                                          tab_id='response', className="bg-dark text-white"),
+                                 dbc.Tab(label='Response Time by Month',
+                                         tab_id='responsetimebymonth', className="bg-dark text-white"),
+                                   dbc.Tab(label='Response Time by Weekday',
+                                         tab_id='responsetimebyweekday', className="bg-dark text-white"),
+                                   dbc.Tab(label='Response Time by Time of Day',
+                                         tab_id='responsetimebytod', className="bg-dark text-white"),
+
+
                                  ]),
                             dcc.Loading(id="loading-icon2", className="flex-grow-1",
                                         children=[dcc.Graph(id="histogram"), ], type='default'),
@@ -902,6 +910,66 @@ def responsehist(result, datemonth):
     return fig
 
 
+def responsetimebymonth(result, datemonth):
+    fig = px.box(result, x="month",  y="responsetime")
+    fig.update_xaxes(
+        showgrid=True
+    )
+    fig.update_yaxes(
+        showgrid=False
+    )
+    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"),xaxis=dict(
+            range=[0, 13],
+            showgrid=False,
+            tickvals=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            ticktext=['Jan', 'Feb', 'March', 'Apr', 'May', 'June',
+                      'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            fixedrange=True,
+            ticksuffix="",
+        ))
+    return fig
+
+def responsetimebytod(result, datemonth):
+    result['hour'] = result['alarm_datetime'].dt.hour
+    fig = px.box(result, x="hour",  y="responsetime")
+    fig.update_xaxes(
+        showgrid=True
+    )
+    fig.update_yaxes(
+        showgrid=False
+    )
+    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"),xaxis=dict(
+            range=[-1, 25],
+            showgrid=False,
+            tickvals=[x for x in range(0, 24)],
+            ticktext=['12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
+                      '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'],
+            fixedrange=True,
+            ticksuffix="",
+        ),)
+    return fig
+
+def responsetimebyweekday(result, datemonth):
+    fig = px.box(result, x="dayofweek",  y="responsetime")
+    fig.update_xaxes(
+        showgrid=True
+    )
+    fig.update_yaxes(
+        showgrid=False
+    )
+    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"),xaxis=dict(
+            range=[-1, 8],
+            showgrid=False,
+            tickvals=[0, 1, 2, 3, 4, 5, 6],
+            ticktext=['Mon', 'Tues', 'Wed', 'Thur', 'Friday', 'Sat', 'Sun'],
+            fixedrange=True,
+            ticksuffix="",
+        ))
+    return fig
+
 def monthhist(result, datemonth):
     #result['month'] = result['month'].astype(str)
     colorVal = ["#2202d1"]*25
@@ -1048,6 +1116,12 @@ def update_bar_chart(start_date, end_date, emd_card_num, datemonth, histogramkin
         return hourhist(result, datemonth)
     elif histogramkind == "response":
         return responsehist(result, datemonth)
+    elif histogramkind == "responsetimebytod":
+        return responsetimebytod(result, datemonth)
+    elif histogramkind == "responsetimebyweekday":
+        return responsetimebyweekday(result, datemonth)
+    elif histogramkind == "responsetimebymonth":
+        return responsetimebymonth(result, datemonth)
 
 
 # %%
