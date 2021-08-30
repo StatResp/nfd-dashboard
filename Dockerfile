@@ -8,4 +8,4 @@ COPY ./app /app
 
 WORKDIR /app
 
-CMD exec gunicorn -b :8080 incident_dashboard:server --timeout 1800
+CMD exec python incident_dashboard.py
