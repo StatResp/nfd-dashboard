@@ -645,9 +645,14 @@ def update_map_response(start_date, end_date, radius, emd_card_num, datemonth, t
      Input("time-slider", "value"), Input("responsetime-value", "value"), Input("day-selector", "value")]
 )
 def update_map_incidents_month(start_date, end_date, radius, emd_card_num, datemonth, timerange, responsefilter, days):
+
+    
     result = return_incidents(
         start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)    
-    fig = px.scatter_mapbox(result, color="responsetime",range_color=[0,40], animation_frame='month-year', lat="latitude", lon="longitude", hover_data=['incidentNumber','latitude','longitude','alarm_datetime','responsetime'],  mapbox_style="open-street-map",color_continuous_scale=px.colors.sequential.Hot)
+    monthlist=result['month-year'].unique().tolist()
+    fig = px.density_mapbox(result, animation_frame='month-year', lat="latitude", lon="longitude",  hover_data=['incidentNumber'],
+    #  color="responsetime",range_color=[0,40], hover_data=['incidentNumber','latitude','longitude','alarm_datetime','responsetime'],color_continuous_scale=px.colors.sequential.Hot
+      mapbox_style="open-street-map",radius=radius)
     fig.update_layout(autosize=True,
         margin=go.layout.Margin(l=0, r=35, t=0, b=0),
         showlegend=False,
@@ -697,10 +702,27 @@ def update_map_incidents_month(start_date, end_date, radius, emd_card_num, datem
         ],
     )
     fig['layout']['updatemenus'][0]['pad']=dict(r= 0, t= 0)
-    fig['layout']['sliders'][0]['pad']=dict(r= 0, t= 0)
+    fig['layout']['sliders'][0]['pad']=dict(r= 0, t= 0,b=0,l=0)
+    fig['layout']['sliders'][0]['bgcolor']="#1E1E1E"
+    fig["layout"].pop("sliders") 
     fig["layout"]["updatemenus"] = [
     {
         "buttons": [
+            {
+                "args":[
+                                {
+                                    "mapbox.zoom": 10,
+                                    "mapbox.center.lon": lonInitial,
+                                    "mapbox.center.lat": latInitial,
+                                    "mapbox.bearing": 0,
+                                    "mapbox.style": mapbox_style,
+                                }
+                            ],
+                "label":"Reset Zoom",
+                "method": "relayout"
+                
+
+            },
             {
                 "args": [None, {"fromcurrent":True}],
                 "label": "Play",
@@ -715,15 +737,22 @@ def update_map_incidents_month(start_date, end_date, radius, emd_card_num, datem
             }
         ],
         "direction": "left",
-        "pad": {"r": 10, "t": 0},
+        "pad": {"r": 0, "t": 0, "b": 0, "l": 0},
         "showactive": False,
         "type": "buttons",
-        "x": 0.1,
-        "xanchor": "right",
-        "y": 0,
-        "yanchor": "top"
+        "x": 0.45,
+        "xanchor": "left",
+        "y": 0.02,
+        "yanchor": "bottom"
     }
 ]
+    for k in range(len(fig.frames)):
+        fig.frames[k]['layout'].update(title_text=f'{monthlist[k]}')
+        fig.frames[k]['layout'].update(title_x=0.1)
+        fig.frames[k]['layout'].update(title_font=dict( family='Courier New, monospace',size=18))        
+        fig.frames[k]['layout'].update(title_y=0.92)                
+        fig.frames[k]['layout'].update(title_yanchor="bottom")
+        fig.frames[k]['layout'].update(title_xanchor="left")
     return fig
 
 def hourhist(result, datemonth):
