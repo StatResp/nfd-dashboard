@@ -328,9 +328,8 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
         ), ],
 ),
     html.Div(className="row", children=[dcc.Markdown(""),
-                                        dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: Nashville Fire Department. Funding for this work has been provided by the National Science Foundation under awards [CNS-1640624](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1640624) and  [IIS-1814958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1814958).'''
-                                                     '''
-         Funding by Department of Energy Vehicles Technology Office and National Science Foundation.''', id='footer', className="col"), ]),
+                                        dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: Nashville Fire Department.'''
+                                                     '''Funding by Tennessee Department of Transportation and National Science Foundation.''', id='footer', className="col"), ]),
 ]
 )
 
@@ -397,7 +396,7 @@ def return_incidents(start_date, end_date, emd_card_num, months, timerange, resp
         
         timecondition = ((df['time'] >= starttime)
                          & (df['time'] <= endtime))          
-        result=df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition].compute()
+        result=df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition & timecondition].compute()
     except Exception:
         print("Exception in user code:")
         traceback.print_exc(file=sys.stdout)
@@ -776,10 +775,10 @@ def hourhist(result, datemonth):
     result['count'] = result['incidentNumber']
     result['h'] = result['hour'].astype(int)
 
-    for hour in list(range(0, 24)):
-        if hour not in result['h'].values:
-            new_row = {'h': hour, 'hour': str(hour), 'count': 0}
-            result = result.append(new_row, ignore_index=True)
+    # for hour in list(range(0, 24)):
+    #     if hour not in result['h'].values:
+    #         new_row = {'h': hour, 'hour': str(hour), 'count': 0}
+    #         result = result.append(new_row, ignore_index=True)
 
     xVal = result['hour']
     yVal = result['count']
@@ -838,8 +837,8 @@ def hourhist(result, datemonth):
 def dayhist(result, datemonth):
     result = result.groupby(['dayofweek']).count().reset_index()
     result['count'] = result['incidentNumber']
-    dayindex = range(0, 7)
-    result = result.reindex(dayindex, fill_value=0)
+    #dayindex = range(0, 7)
+    #result = result.reindex(dayindex, fill_value=0)
     #print(result.index)
     #print(result)
     colorVal = ["#2202d1"]*25
