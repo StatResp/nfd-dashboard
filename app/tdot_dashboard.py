@@ -46,25 +46,8 @@ startdate = df.alarm_date.min().compute()
 enddate = df.alarm_date.max().compute()
 counties = df.county_incident.drop_duplicates().compute()
 counties = counties.tolist()
+counties.sort()
 # print(counties)
-
-
-def transform_severity(emdCardNumber):
-    if 'A' in emdCardNumber:
-        return 2
-    elif 'B' in emdCardNumber:
-        return 3
-    elif 'C' in emdCardNumber:
-        return 4
-    elif 'D' in emdCardNumber:
-        return 5
-    elif 'E' in emdCardNumber:
-        return 6
-    elif 'Ω' in emdCardNumber:
-        return 1
-    else:
-        return 0
-
 
 # set the server and global parameters
 server = flask.Flask(__name__)
@@ -269,6 +252,10 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                          tab_id='day', className="bg-dark text-white"),
                                  dbc.Tab(label='Incidents by Time of Day',
                                          tab_id='hour', className="bg-dark text-white"),
+                                  dbc.Tab(label='Incidents by Weather Conditions',
+                                         tab_id='incidentsweather', className="bg-dark text-white"),
+                                  dbc.Tab(label='Incidents by Light Conditions',
+                                         tab_id='incidentslight', className="bg-dark text-white"),
                                  ]),
                             dcc.Loading(id="loading-icon2", className="flex-grow-1",
                                         children=[dcc.Graph(id="histogram"), ], type='default'),
@@ -367,61 +354,7 @@ def update_incidents(start_date, end_date, counties, datemonth, timerange,   day
 
     return "Incidents: %d" % (result.size), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
 
-
-viridis = cm.get_cmap('RdYlGn', 20000)
-
-
-def plotly_linestring(vis_shape_row, minenergy, maxenergy):
-    normalized = (1-(vis_shape_row.energy_consumed_kwh_per_mile -
-                     minenergy)/(maxenergy-minenergy))
-    colorval = viridis(normalized)
-    return go.Scattermapbox(
-        lat=np.array(np.array(vis_shape_row['geometry'].coords)[:, 1]),
-        lon=np.array(np.array(vis_shape_row['geometry'].coords)[:, 0]),
-        mode='lines',
-        name="route {}".format(vis_shape_row.route_id),
-        line={'color': colors.to_hex(
-            colorval, keep_alpha=False), 'width': 4},
-        text="route {0}, Average KWH per Mile {1}".format(
-            vis_shape_row.route_id, vis_shape_row.energy_consumed_kwh_per_mile)
-    )
-
-
-def set_map_layout(fig):
-    return fig.update_layout(
-        autosize=True,
-        margin=go.layout.Margin(l=0, r=0, t=0, b=0),
-        hovermode='closest',
-        plot_bgcolor="#1E1E1E",
-        paper_bgcolor="#1E1E1E",
-        legend=dict(
-            orientation="h",
-            y=0,
-            yanchor="bottom",
-            xanchor="center",
-            x=0.5,
-            traceorder="reversed",
-            title_font_family="Times New Roman",
-            font=dict(
-                family="Courier",
-                size=14, color="white",
-            ),
-            bgcolor="rgba(0, 0, 0, 0.5)",
-            bordercolor="Black",
-            borderwidth=0,
-        ),
-        mapbox=dict(
-            accesstoken=MAPBOX_ACCESS_TOKEN,
-            bearing=0, style=mapbox_style,
-            center=dict(
-                lat=latInitial,
-                lon=lonInitial
-            ),
-            pitch=0,
-            zoom=11
-        ),
-    )
-
+ 
 
 def return_empty_fig():
     return {
@@ -527,7 +460,7 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
             center=dict(lat=latone, lon=lonone),
             style=mapbox_style,
             bearing=0,
-            zoom=8,
+            zoom=10,
         ),
         updatemenus=[
             dict(
@@ -537,8 +470,8 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
                             args=[
                                 {
                                     "mapbox.zoom": 10,
-                                    "mapbox.center.lon": lonInitial,
-                                    "mapbox.center.lat": latInitial,
+                                    "mapbox.center.lon": lonone,
+                                    "mapbox.center.lat": latone,
                                     "mapbox.bearing": 0,
                                     "mapbox.style": mapbox_style,
                                 }
@@ -618,7 +551,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                           center=dict(lat=latone, lon=lonone),
                           style=mapbox_style,
                           bearing=0,
-                          zoom=7,
+                          zoom=9,
                       ),
                       updatemenus=[
                           dict(
@@ -627,9 +560,9 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                                       dict(
                                           args=[
                                               {
-                                                  "mapbox.zoom": 10,
-                                                  "mapbox.center.lon": lonInitial,
-                                                  "mapbox.center.lat": latInitial,
+                                                  "mapbox.zoom": 9,
+                                                  "mapbox.center.lon": lonone,
+                                                  "mapbox.center.lat": latone,
                                                   "mapbox.bearing": 0,
                                                   "mapbox.style": mapbox_style,
                                               }
@@ -667,9 +600,9 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                 {
                     "args": [
                         {
-                            "mapbox.zoom": 10,
-                            "mapbox.center.lon": lonInitial,
-                            "mapbox.center.lat": latInitial,
+                            "mapbox.zoom": 9,
+                            "mapbox.center.lon": lonone,
+                            "mapbox.center.lat": latone,
                             "mapbox.bearing": 0,
                             "mapbox.style": mapbox_style,
                         }
@@ -986,6 +919,100 @@ def monthhist(result, datemonth):
     )
 
 
+def incidentslight(result, datemonth):
+    result = result.groupby(['light_conditions']).count().reset_index()
+    result['count'] = result['incidentNumber']
+    colorVal = ["#2202d1"]*25
+    xVal = result['light_conditions']
+    yVal = result['count']
+    layout = go.Layout(
+        bargap=0.05,
+        autosize=True,
+        bargroupgap=0,
+        barmode="group",
+        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+        showlegend=False,
+        plot_bgcolor="#31302F",
+        paper_bgcolor="#31302F",
+        dragmode="select",
+        font=dict(color="white"),       
+        yaxis=dict(
+            range=[0, max(yVal) + max(yVal) / 4],
+            showticklabels=False,
+            showgrid=False,
+            fixedrange=True,
+            rangemode="nonnegative",
+            zeroline=False,
+        ),
+        annotations=[
+            dict(
+                x=xi,
+                y=yi,
+                text=str(yi),
+                xanchor="center",
+                yanchor="bottom",
+                showarrow=False,
+                font=dict(color="white"),
+            )
+            for xi, yi in zip(xVal, yVal)
+        ],
+    )
+
+    return go.Figure(
+        data=[
+            go.Bar(x=xVal, y=yVal, marker=dict(
+                color=np.array(colorVal)), hoverinfo="x"),
+        ],
+        layout=layout,
+    )
+def incidentsweather(result, datemonth):
+    result = result.groupby(['weather_conditions']).count().reset_index()
+    result['count'] = result['incidentNumber']
+    colorVal = ["#2202d1"]*25
+    xVal = result['weather_conditions']
+    yVal = result['count']
+    layout = go.Layout(
+        bargap=0.05,
+        autosize=True,
+        bargroupgap=0,
+        barmode="group",
+        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+        showlegend=False,
+        plot_bgcolor="#31302F",
+        paper_bgcolor="#31302F",
+        dragmode="select",
+        font=dict(color="white"),       
+        yaxis=dict(
+            range=[0, max(yVal) + max(yVal) / 4],
+            showticklabels=False,
+            showgrid=False,
+            fixedrange=True,
+            rangemode="nonnegative",
+            zeroline=False,
+        ),
+        annotations=[
+            dict(
+                x=xi,
+                y=yi,
+                text=str(yi),
+                xanchor="center",
+                yanchor="bottom",
+                showarrow=False,
+                font=dict(color="white"),
+            )
+            for xi, yi in zip(xVal, yVal)
+        ],
+    )
+
+    return go.Figure(
+        data=[
+            go.Bar(x=xVal, y=yVal, marker=dict(
+                color=np.array(colorVal)), hoverinfo="x"),
+        ],
+        layout=layout,
+    )
+
+
 def totals(result, datemonth):
     #result['month'] = result['month'].astype(str)
     # colorVal = ["#2202d1"]*25
@@ -1074,10 +1101,10 @@ def update_bar_chart(start_date, end_date, counties, datemonth, histogramkind, t
         return responsehist(result, datemonth)
     elif histogramkind == "responsetimebytod":
         return responsetimebytod(result, datemonth)
-    elif histogramkind == "responsetimebyweekday":
-        return responsetimebyweekday(result, datemonth)
-    elif histogramkind == "responsetimebymonth":
-        return responsetimebymonth(result, datemonth)
+    elif histogramkind == "incidentslight":
+        return incidentslight(result, datemonth)
+    elif histogramkind == "incidentsweather":
+        return incidentsweather(result, datemonth)
 
 
 # %%
