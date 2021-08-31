@@ -56,8 +56,8 @@ app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, externa
                 {"name": "viewport", "content": "width=device-width"}])
 app.title = 'Incident Dashboard'
 
-cache = Cache(app.server,
-              config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
+# cache = Cache(app.server,
+#               config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
 
 
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
@@ -277,7 +277,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 # Incident Filterings
 
 
-@cache.memoize()
+ 
 def return_incidents(start_date, end_date, counties, months, timerange,   days):
     start_date = dateparser.parse(start_date)
     end_date = dateparser.parse(end_date)
