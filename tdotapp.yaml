@@ -19,7 +19,7 @@ handlers:
   redirect_http_response_code: 301
 
 
-entrypoint: gunicorn -b 0.0.0.0:8080 --chdir app incident_dashboard:server
+entrypoint: gunicorn -b 0.0.0.0:8080 --chdir app tdot_dashboard:server
 
 
 
