@@ -55,9 +55,9 @@ counties.sort()
 # set the server and global parameters
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
-app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=[dbc.themes.BOOTSTRAP], server=server, meta_tags=[
+app = dash.Dash(__name__, title='TN Highway Incident Dashboard', update_title=None, external_stylesheets=[dbc.themes.BOOTSTRAP], server=server, meta_tags=[
                 {"name": "viewport", "content": "width=device-width"}])
-app.title = 'Incident Dashboard'
+app.title = 'TN Highway Incident Dashboard'
 
 # cache = Cache(app.server,
 #               config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
@@ -78,7 +78,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                     className="col-12 col-lg-3",
                     children=[
                         dcc.Markdown(
-                            '''# [Statresp.ai](https://statresp.ai) | TDOT Incident Dashboard'''),
+                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard'''),
                         html.Div(
                             className="card p-0 m-0 bg-dark", style={"border": "none"},
                             children=[
@@ -327,7 +327,7 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
         timecondition = ((df['time'] >= starttime)
                          & (df['time'] <= endtime))
         result = df[timecondition & date_condition & month_condition &
-                    weekday_condition & county_condition]#.compute()
+                    weekday_condition & county_condition & (df['frc']==0)]#.compute()
     except Exception:
         print("Exception in user code:")
         traceback.print_exc(file=sys.stdout)
@@ -398,28 +398,28 @@ def return_empty_fig():
 )
 def update_map_graph(start_date, end_date, radius, counties, datemonth, timerange,   days):
 
-    if counties == None or len(counties) != 1:
-        return {
-            "layout": {
-                "xaxis": {
-                    "visible": False
-                },
-                "yaxis": {
-                    "visible": False
-                },
-                "annotations": [
-                    {
-                        "text": "This map can be drawn for one and only one county.",
-                        "xref": "paper",
-                        "yref": "paper",
-                        "showarrow": False,
-                        "font": {
-                            "size": 28
-                        }
-                    }
-                ]
-            }
-        }
+    # if counties == None or len(counties) != 1:
+    #     return {
+    #         "layout": {
+    #             "xaxis": {
+    #                 "visible": False
+    #             },
+    #             "yaxis": {
+    #                 "visible": False
+    #             },
+    #             "annotations": [
+    #                 {
+    #                     "text": "This map can be drawn for one and only one county.",
+    #                     "xref": "paper",
+    #                     "yref": "paper",
+    #                     "showarrow": False,
+    #                     "font": {
+    #                         "size": 28
+    #                     }
+    #                 }
+    #             ]
+    #         }
+    #     }
 
     result = return_incidents(
         start_date, end_date, counties, datemonth, timerange,   days)
@@ -449,6 +449,13 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
         }
     latone=result['latitude'].iloc[0]
     lonone=result['longitude'].iloc[0]
+    zoomvalue=10
+
+    if counties == None or len(counties) != 1:
+        latone=latInitial
+        lonone=lonInitial
+        zoomvalue=6
+
 
     fig = px.density_mapbox(result, lat="latitude", lon="longitude",  hover_data=['incidentNumber'],
                             #  color="responsetime",range_color=[0,40], hover_data=['incidentNumber','latitude','longitude','alarm_datetime','responsetime'],color_continuous_scale=px.colors.sequential.Hot
@@ -463,7 +470,7 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
             center=dict(lat=latone, lon=lonone),
             style=mapbox_style,
             bearing=0,
-            zoom=10,
+            zoom=zoomvalue,
         ),
         updatemenus=[
             dict(
@@ -472,7 +479,7 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
                         dict(
                             args=[
                                 {
-                                    "mapbox.zoom": 10,
+                                    "mapbox.zoom": zoomvalue,
                                     "mapbox.center.lon": lonone,
                                     "mapbox.center.lat": latone,
                                     "mapbox.bearing": 0,
@@ -540,8 +547,16 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
             }
         }
 
+
+
     latone=result['latitude'].iloc[0]
     lonone=result['longitude'].iloc[0]
+    zoomvalue=10
+
+    if counties == None or len(counties) != 1:
+        latone=latInitial
+        lonone=lonInitial
+        zoomvalue=6
     fig = px.density_mapbox(result, animation_frame='month-year', lat="latitude", lon="longitude",  hover_data=['incidentNumber'],
                             #  color="responsetime",range_color=[0,40], hover_data=['incidentNumber','latitude','longitude','alarm_datetime','responsetime'],color_continuous_scale=px.colors.sequential.Hot
                             mapbox_style="open-street-map", radius=radius)
@@ -554,7 +569,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                           center=dict(lat=latone, lon=lonone),
                           style=mapbox_style,
                           bearing=0,
-                          zoom=9,
+                          zoom=zoomvalue,
                       ),
                       updatemenus=[
                           dict(
@@ -563,7 +578,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                                       dict(
                                           args=[
                                               {
-                                                  "mapbox.zoom": 9,
+                                                  "mapbox.zoom": zoomvalue,
                                                   "mapbox.center.lon": lonone,
                                                   "mapbox.center.lat": latone,
                                                   "mapbox.bearing": 0,
@@ -603,7 +618,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                 {
                     "args": [
                         {
-                            "mapbox.zoom": 9,
+                            "mapbox.zoom": zoomvalue,
                             "mapbox.center.lon": lonone,
                             "mapbox.center.lat": latone,
                             "mapbox.bearing": 0,
