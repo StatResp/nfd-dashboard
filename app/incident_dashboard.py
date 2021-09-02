@@ -2,9 +2,9 @@
 from matplotlib import cm, colors
 import dash
 import flask
+from flask_caching import Cache
 import pyarrow.parquet as pq
 import os
-from flask_caching import Cache
 from dask import dataframe as dd
 from random import randint
 import dash_core_components as dcc
@@ -53,6 +53,7 @@ enddate = df.alarm_date.max().compute()
 #print(startdate, enddate)
 #print(df.dtypes)
 
+
 def transform_severity(emdCardNumber):
     if 'A' in emdCardNumber:
         return 2
@@ -77,9 +78,9 @@ app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, externa
                 {"name": "viewport", "content": "width=device-width"}])
 app.title = 'Incident Dashboard'
 
+
 cache = Cache(app.server,
               config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
-
 
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 px.set_mapbox_access_token(mapbox_access_token)
@@ -337,7 +338,6 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 ## Incident Filterings
 import dateparser, traceback
 
-
 @cache.memoize()
 def return_incidents(start_date, end_date, emd_card_num, months, timerange, responsefilter, days):
     responsefilter = float(responsefilter)
@@ -350,57 +350,53 @@ def return_incidents(start_date, end_date, emd_card_num, months, timerange, resp
     
     #print(df.dtypes)
     
-    try:
-        date_condition = ((df['alarm_date'] >= start_date)
-                          & (df['alarm_date'] <= end_date))
-        
-        #print("set date condition")
-        if responsefilter > 0:
-           responsecondition = ((df['responsetime'] > responsefilter))
-        else:
-           responsecondition = (True)
-        if days is None or len(days) == 0:
-            weekday_condition = (True)
-        else:
-            weekday_condition = ((df['dayofweek']).isin(days))
-        if emd_card_num is None or len(emd_card_num) == 0:
-            emd_card_condition = (True)
-        else:
-            if '29' in emd_card_num:
-                emd_card_num.append('34')
-            string = '[A-Z]'
-            updatedlist = [str(x) + string for x in emd_card_num]
-            separator = '|'
-            search_str = '^' + separator.join(updatedlist)
-            emd_card_condition = (df.emdCardNumber.str.contains(search_str))
-        if months is None or len(months) == 0:
-            month_condition = True
-        else:
-            month_condition = ((df['month'].isin(months)))
-        timemin, timemax = timerange
-        hourmax = int(timemax)
-        hourmin = int(timemin)
-        
-        #print("going to set time condition")
-        
-        if hourmax == 24:
-            endtime = (tt(23, 59, 59))
-            endtime = 23*3600+59*60 +59
-        else:
-            minutesmax = int(60*(timemax-hourmax))            
-            endtime = hourmax*3600+minutesmax*60 
-        minutesmin = int(60*(timemin-hourmin))         
-        starttime=hourmin*3600+minutesmin*60
-        
-        #print(type(starttime),starttime)
-        
-        timecondition = ((df['time'] >= starttime)
-                         & (df['time'] <= endtime))          
-        result=df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition & timecondition].compute()
-    except Exception:
-        print("Exception in user code:")
-        traceback.print_exc(file=sys.stdout)
-        
+
+    date_condition = ((df['alarm_date'] >= start_date)
+                        & (df['alarm_date'] <= end_date))
+    
+    #print("set date condition")
+    if responsefilter > 0:
+        responsecondition = ((df['responsetime'] > responsefilter))
+    else:
+        responsecondition = (True)
+    if days is None or len(days) == 0:
+        weekday_condition = (True)
+    else:
+        weekday_condition = ((df['dayofweek']).isin(days))
+    if emd_card_num is None or len(emd_card_num) == 0:
+        emd_card_condition = (True)
+    else:
+        if '29' in emd_card_num:
+            emd_card_num.append('34')
+        string = '[A-Z]'
+        updatedlist = [str(x) + string for x in emd_card_num]
+        separator = '|'
+        search_str = '^' + separator.join(updatedlist)
+        emd_card_condition = (df.emdCardNumber.str.contains(search_str))
+    if months is None or len(months) == 0:
+        month_condition = True
+    else:
+        month_condition = ((df['month'].isin(months)))
+    timemin, timemax = timerange
+    hourmax = int(timemax)
+    hourmin = int(timemin)
+    
+    #print("going to set time condition")
+    
+    if hourmax == 24:
+        endtime = (tt(23, 59, 59))
+        endtime = 23*3600+59*60 +59
+    else:
+        minutesmax = int(60*(timemax-hourmax))            
+        endtime = hourmax*3600+minutesmax*60 
+    minutesmin = int(60*(timemin-hourmin))         
+    starttime=hourmin*3600+minutesmin*60
+    
+    #print(type(starttime),starttime)
+    
+    timecondition = ((df['time'] >= starttime)
+                        & (df['time'] <= endtime))          
+    result=df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition & timecondition].compute()
     #print(result)
     return result
 
@@ -424,89 +420,9 @@ def update_incidents(start_date, end_date, emd_card_num, datemonth, timerange, r
         start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)
     timemin, timemax = timerange
 
-    return "Incidents: %d" % (result.size), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
+    return "Incidents: %d" % (len(result)), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0] 
+ 
 
-
-viridis = cm.get_cmap('RdYlGn', 20000)
-
-
-def plotly_linestring(vis_shape_row, minenergy, maxenergy):
-    normalized = (1-(vis_shape_row.energy_consumed_kwh_per_mile -
-                     minenergy)/(maxenergy-minenergy))
-    colorval = viridis(normalized)
-    return go.Scattermapbox(
-        lat=np.array(np.array(vis_shape_row['geometry'].coords)[:, 1]),
-        lon=np.array(np.array(vis_shape_row['geometry'].coords)[:, 0]),
-        mode='lines',
-        name="route {}".format(vis_shape_row.route_id),
-        line={'color': colors.to_hex(
-            colorval, keep_alpha=False), 'width': 4},
-        text="route {0}, Average KWH per Mile {1}".format(
-            vis_shape_row.route_id, vis_shape_row.energy_consumed_kwh_per_mile)
-    )
-
-
-def set_map_layout(fig):
-    return fig.update_layout(
-        autosize=True,
-        margin=go.layout.Margin(l=0, r=0, t=0, b=0),
-        hovermode='closest',
-        plot_bgcolor="#1E1E1E",
-        paper_bgcolor="#1E1E1E",
-        legend=dict(
-            orientation="h",
-            y=0,
-            yanchor="bottom",
-            xanchor="center",
-            x=0.5,
-            traceorder="reversed",
-            title_font_family="Times New Roman",
-            font=dict(
-                family="Courier",
-                size=14, color="white",
-            ),
-            bgcolor="rgba(0, 0, 0, 0.5)",
-            bordercolor="Black",
-            borderwidth=0,
-        ),
-        mapbox=dict(
-            accesstoken=MAPBOX_ACCESS_TOKEN,
-            bearing=0, style=mapbox_style,
-            center=dict(
-                lat=latInitial,
-                lon=lonInitial
-            ),
-            pitch=0,
-            zoom=11
-        ),
-    )
-
-
-def return_empty_fig():
-    return {
-        "layout": {
-            "xaxis": {
-                "visible": False
-            },
-            "plot_bgcolor": "#1E1E1E",
-            "paper_bgcolor": "#1E1E1E",
-            "yaxis": {
-                "visible": False
-            },
-            "annotations": [
-                {
-                    "text": "No matching data found",
-                    "xref": "paper",
-                    "yref": "paper",
-                    "showarrow": False,
-                    "font": {
-                        "size": 28,
-                        "color": "white"
-                    }
-                }
-            ]
-        }
-    }
 
 
 # %%
@@ -523,8 +439,8 @@ def update_map_graph(start_date, end_date, radius, emd_card_num, datemonth, time
     result = return_incidents(
         start_date, end_date, emd_card_num, datemonth, timerange, responsefilter, days)
     fig = go.Figure(go.Densitymapbox(lat=result['latitude'], lon=result['longitude'],
-                                     #customdata=result[['incidentNumber','responsetime','alarm_datetime','severity','emdCardNumber']],
-                                     #hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[4]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}<br> Severity  %{customdata[3]}",
+                                     customdata=result[['incidentNumber','responsetime','alarm_datetime','emdCardNumber']],
+                                     hovertemplate="%{lat},%{lon} <br> Incidentid: %{customdata[0]} <br> EmdCardNum: %{customdata[3]} <br> ResponseTime: %{customdata[1]} min. <br> Alarm Time: %{customdata[2]}",
                                      radius=radius), layout=Layout(
         autosize=True,
         margin=go.layout.Margin(l=0, r=35, t=0, b=0),
