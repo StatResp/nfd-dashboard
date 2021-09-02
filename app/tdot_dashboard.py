@@ -40,11 +40,14 @@ lonInitial = -86.774372
 # df = dataextract.decompress_pickle(
 #    'data/nfd/geo_out_july_2020_central_time.pbz2')
 
-#df =table2.to_pandas()
-df = dd.read_parquet('tdot_incidents.parquet', engine='pyarrow')
-startdate = df.alarm_date.min().compute()
-enddate = df.alarm_date.max().compute()
-counties = df.county_incident.drop_duplicates().compute()
+#
+
+table2 = pq.read_table('tdot_incidents.parquet')
+df =table2.to_pandas()
+#df = dd.read_parquet('tdot_incidents.parquet', engine='pyarrow')
+startdate = df.alarm_date.min()#.compute()
+enddate = df.alarm_date.max()#.compute()
+counties = df.county_incident.drop_duplicates()#.compute()
 counties = counties.tolist()
 counties.sort()
 # print(counties)
@@ -324,7 +327,7 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
         timecondition = ((df['time'] >= starttime)
                          & (df['time'] <= endtime))
         result = df[timecondition & date_condition & month_condition &
-                    weekday_condition & county_condition].compute()
+                    weekday_condition & county_condition]#.compute()
     except Exception:
         print("Exception in user code:")
         traceback.print_exc(file=sys.stdout)
