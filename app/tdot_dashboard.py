@@ -27,13 +27,15 @@ import geopandas as gpd
 import dash_bootstrap_components as dbc
 
 # set configurations
-mapbox_style = "light"
+mapbox_style = "dark"
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 MAPBOX_ACCESS_TOKEN = mapbox_access_token
 pd.set_option('display.max_columns', None)
 
 latInitial = 36.16228
 lonInitial = -86.774372
+tncounties=pd.read_csv('counties.csv')
+tncounties['county']=tncounties['county'].str.lower()
 
 #table2 = pq.read_table('data/nfd/incidents_july_2020_2.parquet')
 
@@ -455,6 +457,14 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
         latone=latInitial
         lonone=lonInitial
         zoomvalue=6
+    else:
+        #find center of one county
+        onecounty=counties[0]
+        try:
+            latone=tncounties[tncounties.county==onecounty].latitude.iloc[0]
+            lonone=tncounties[tncounties.county==onecounty].longitude.iloc[0]
+        except:
+            pass
 
 
     fig = px.density_mapbox(result, lat="latitude", lon="longitude",  hover_data=['incidentNumber'],
@@ -557,6 +567,14 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
         latone=latInitial
         lonone=lonInitial
         zoomvalue=6
+    else:
+        #find center of one county
+        onecounty=counties[0]
+        try:
+            latone=tncounties[tncounties.county==onecounty].latitude.iloc[0]
+            lonone=tncounties[tncounties.county==onecounty].longitude.iloc[0]
+        except:
+            pass
     fig = px.density_mapbox(result, animation_frame='month-year', lat="latitude", lon="longitude",  hover_data=['incidentNumber'],
                             #  color="responsetime",range_color=[0,40], hover_data=['incidentNumber','latitude','longitude','alarm_datetime','responsetime'],color_continuous_scale=px.colors.sequential.Hot
                             mapbox_style="open-street-map", radius=radius)
