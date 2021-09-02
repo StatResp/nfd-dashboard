@@ -22,35 +22,45 @@ import sys
 import resource
 import geopandas as gpd
 import dash_bootstrap_components as dbc
+## Incident Filterings
+import dateparser, traceback
+
 
 # set configurations
 mapbox_style = "light"
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 MAPBOX_ACCESS_TOKEN = mapbox_access_token
 pd.set_option('display.max_columns', None)
-
 latInitial = 36.16228
 lonInitial = -86.774372
 
-#table2 = pq.read_table('data/nfd/incidents_july_2020_2.parquet')
+table2 = pq.read_table('data/nfd/nfdincidents_till_July2021.parquet')
 
-#df = dataextract.decompress_pickle(
-#    'data/nfd/geo_out_july_2020_central_time.pbz2')
 
-#df =table2.to_pandas()
-df= dd.read_parquet('data/nfd/nfdincidents_till_July2021.parquet',engine='pyarrow')  
+df= table2.to_pandas()
+#dd.read_parquet('data/nfd/nfdincidents_till_July2021.parquet',engine='pyarrow')  
 df['time']=df['alarm_datetime'].dt.hour*3600+df['alarm_datetime'].dt.minute*60+df['alarm_datetime'].dt.second
 df['dayofweek']=df['alarm_datetime'].dt.dayofweek
 df['month-year']=df['alarm_datetime'].dt.strftime('%b %Y')
 
+#table2 = pq.read_table('data/nfd/incidents_july_2020_2.parquet')
+#df = dataextract.decompress_pickle(
+#    'data/nfd/geo_out_july_2020_central_time.pbz2')
+#df =table2.to_pandas()
 #df['month-year']=df['alarm_year'].apply(str,meta=('str'))+'-'+df['month'].apply(str,meta=('str'))
 # configure the dates
-startdate = df.alarm_date.min().compute()
-enddate = df.alarm_date.max().compute()
 #df['alarm_datetime'] = pd.to_datetime(df.alarm_datetime)
 #print(df.head(2))
 #print(startdate, enddate)
 #print(df.dtypes)
+
+def getstartdate():
+    startdate = df.alarm_date.min()#.compute()
+    return startdate
+
+def getenddate():
+    enddate = df.alarm_date.max()#.compute()
+    return enddate
 
 
 def transform_severity(emdCardNumber):
@@ -109,15 +119,14 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                 '''  # Start Date''', className="p-0 m-0", style={"margin": "0", "padding": "0"}),
                             dcc.DatePickerSingle(
                                 id="date-picker",
-                                min_date_allowed=startdate,
-                                max_date_allowed=enddate,
-                                initial_visible_month=startdate,
-                                date=startdate,
+                                min_date_allowed=getstartdate(),
+                                max_date_allowed=getenddate(),
+                                initial_visible_month=getstartdate(),
+                                date=getstartdate(),
                                 display_format="MMMM D, YYYY",
                                 style={"border": "0px solid black"},
                             )],
                         ),
-
                         html.Div(
                             className="card p-1 m-1 bg-dark",
                             children=[
@@ -125,10 +134,10 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                     '''## End Date''', style={"margin": "0", "padding": "0"}),
                                 dcc.DatePickerSingle(
                                     id="date-picker-end",
-                                    min_date_allowed=startdate,
-                                    max_date_allowed=enddate,
-                                    initial_visible_month=enddate,
-                                    date=enddate,
+                                    min_date_allowed=getstartdate(),
+                                    max_date_allowed=getenddate(),
+                                    initial_visible_month=getenddate(),
+                                    date=getenddate(),
                                     display_format="MMMM D, YYYY",
                                     style={"border": "0px solid black"},
                                 )
@@ -334,8 +343,6 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 )
 
 
-## Incident Filterings
-import dateparser, traceback
 
 #@cache.memoize()
 def return_incidents(start_date, end_date, emd_card_num, months, timerange, responsefilter, days):
@@ -395,7 +402,7 @@ def return_incidents(start_date, end_date, emd_card_num, months, timerange, resp
     
     timecondition = ((df['time'] >= starttime)
                         & (df['time'] <= endtime))          
-    result=df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition & timecondition].compute()
+    result=df[emd_card_condition & date_condition & responsecondition & month_condition & weekday_condition & timecondition]#.compute()
     #print(result)
     return result
 

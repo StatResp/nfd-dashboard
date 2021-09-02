@@ -13,6 +13,7 @@ numpy
 pandas
 flask_caching
 joblib
+gevent
 matplotlib
 statsmodels
 nbconvert
