@@ -2,7 +2,6 @@
 from matplotlib import cm, colors
 import dash
 import flask
-from flask_caching import Cache
 import pyarrow.parquet as pq
 import os
 from dask import dataframe as dd
@@ -79,8 +78,8 @@ app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, externa
 app.title = 'Incident Dashboard'
 
 
-cache = Cache(app.server,
-              config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
+#cache = Cache(app.server,
+#              config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
 
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 px.set_mapbox_access_token(mapbox_access_token)
@@ -338,7 +337,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 ## Incident Filterings
 import dateparser, traceback
 
-@cache.memoize()
+#@cache.memoize()
 def return_incidents(start_date, end_date, emd_card_num, months, timerange, responsefilter, days):
     responsefilter = float(responsefilter)
     
