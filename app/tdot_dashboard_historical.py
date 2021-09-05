@@ -36,9 +36,6 @@ import os
 
 
 
-
-
-
 # set configurations
 mapbox_style = "light"
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
