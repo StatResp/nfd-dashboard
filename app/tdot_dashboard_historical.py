@@ -46,6 +46,12 @@ metadata['merged_pickle_address'] = 'data/tdot/merged_4h_2017-04-01_to_2021-06-0
 metadata['incident_pickle_address'] = 'data/tdot/incident'
 metadata['pred_name_TF'] = 'incident_occurred'
 
+# available_features = ['is_weekend', 'window',
+#                       'speed_mean', 'average_speed_mean', 'reference_speed_mean', 'congestion_mean', 'miles', 'lanes',
+#                       'isf_length', 'slope_median', 'ends_ele_diff', 'temp_mean', 'wind_spd_mean', 'vis_mean', 'precip_mean',
+#                       'mean_incidents_last_7_days', 'mean_incidents_last_4_weeks', 'mean_incidents_over_all_windows',
+#                       ]
+
 available_features = ['is_weekend', 'window',
                       'speed_mean', 'average_speed_mean', 'reference_speed_mean', 'congestion_mean', 'miles', 'lanes',
                       'isf_length', 'slope_median', 'ends_ele_diff', 'temp_mean', 'wind_spd_mean', 'vis_mean', 'precip_mean',
@@ -254,6 +260,44 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                      ),
                                  ]
                                  ),
+
+                                                                    html.Div(id="feature-selector",
+                                                     className="card p-0 m-0 bg-dark", style={"display": "none"},
+                                                     children=[
+                                                          dcc.Markdown(
+                                                              '''## Select Feature for Likelihood Analysis'''),
+                                                         dcc.Dropdown(
+                                                             options=[
+                                                                 {'value': 'is_weekend',
+                                                                  'label': 'Weekend'},
+                                                                 {'value': 'window',
+                                                                  'label': 'Time of Day'},
+                                                                 {'value': 'reference_speed_mean',
+                                                                  'label': 'Reference Speed'},
+                                                                 {'value': 'congestion_mean',
+                                                                  'label': 'Traffic Congestion'},
+                                                                 {'value': 'lanes',
+                                                                  'label': "Number of Lanes"},
+                                                                # {'value': 'ends_ele_diff',
+                                                                #  'label': "Elevation Change"},
+                                                                 {'value': 'temp_mean',
+                                                                  'label': "Temperature"},
+                                                                 {'value': 'wind_spd_mean',
+                                                                  'label': "Windspeed"},
+                                                                 {'value': 'vis_mean',
+                                                                  'label': "Visibility"},
+                                                                 {'value': 'precip_mean',
+                                                                  'label': "Precipitation"},
+                                                                 #{'value': 'mean_incidents_last_7_days',
+                                                                 # 'label': "Incidents in past Week"},
+                                                                 #{'value': 'mean_incidents_last_4_weeks', 'label': "Incidents in past Month"}, 
+                                                                 ],
+                                                             value='temp_mean',
+                                                             id='feature',
+                                                             multi=False,
+                                                         ),
+                                                     ],
+                                                     ),
                         html.Div(className="card p-1 m-1 bg-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                                                                              html.P(
                             'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
@@ -291,27 +335,14 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                          tab_id='day', className="bg-dark text-white"),
                                  dbc.Tab(label='Incidents by Time of Day',
                                          tab_id='hour', className="bg-dark text-white"),
-                                 dbc.Tab(label='Incidents by Feature',
-                                         tab_id='incidentsfeature', className="bg-dark text-white"),
-                                 dbc.Tab(label='Incidents by Feature Combo',
+                                 dbc.Tab(label='Comparitive Likelihood',
                                          tab_id='incidentsfeaturecombo', className="bg-dark text-white"),
+                                 dbc.Tab(label='Comparitive Likelihood by Feature',
+                                         tab_id='incidentsfeature', className="bg-dark text-white"),
+
                                  ]),
                             dcc.Loading(id="loading-icon2", className="flex-grow-1",
                                         children=[
-                                            html.Div(
-                                                className="card p-1 m-1 bg-dark",style={"display": "none"},
-                                                children=[
-                                                    dcc.Markdown(
-                                                        '''## Feature'''),
-                                                    dcc.Dropdown(
-                                                        options=[{'label': name, 'value': name}
-                                                                 for name in available_features],
-                                                        value='temp_mean',
-                                                        id='feature',
-                                                        multi=False,
-                                                    ),
-                                                ],
-                                            ),
                                             dcc.Graph(id="histogram"), ], type='default'),
                         ]
                         ),
@@ -1059,15 +1090,12 @@ def monthhist(result, datemonth):
 
 
 def incidentsfeature(df_merged, feature):
-    #feature = available_features[6]
-
-    # it converts the selected feature to categorical using a predifined function called categorize_numerical_features
+    colorVal = ["#2202d1"]*25
     feature_cat = feature+'_cat_'
     df_merged_ = categorize_numerical_features(
         df_merged[[feature, metadata['pred_name_TF']]])
     # making sure all subplots will have the same category order
     category_orders = {feature_cat: df_merged_[feature_cat].cat.categories}
-
     # #Drawing the first figure; histogram of the feature
     # if len(df_merged)<1e6:
     #     fig1 = px.histogram(df_merged_[[feature]], x=feature, nbins=20)
@@ -1079,8 +1107,8 @@ def incidentsfeature(df_merged, feature):
     #     fig1 = px.histogram(df_merged_[[feature,metadata['pred_name_TF']]].sample(n=1000000, random_state=0), x=feature, nbins=20)
 
     # Drawing the second figure; histogram of the categorized feature
-    df_merged_cat_barplot = df_merged_[[metadata['pred_name_TF'], feature_cat]].groupby(
-        feature_cat).agg('count').rename(columns={metadata['pred_name_TF']: 'freq'}).reset_index()
+    # df_merged_cat_barplot = df_merged_[[metadata['pred_name_TF'], feature_cat]].groupby(
+    #    feature_cat).agg('count').rename(columns={metadata['pred_name_TF']: 'freq'}).reset_index()
     #fig2 = px.bar(df_merged_cat_barplot, x=feature_cat, y='freq', category_orders=category_orders)
     # fig2.write_html('hist_test2.html')
     # Drawing the third figure; total number of incidents given each category of the selected feature
@@ -1091,57 +1119,133 @@ def incidentsfeature(df_merged, feature):
     #fig3 = px.bar(df_incidentcount, x=feature_cat, y='sum',category_orders=category_orders)
     # fig3.write_html('hist_test3.html')
     # Drawing the fourth figure; mean (normalized) number of incidents given each category of the selected feature
-    fig = px.bar(df_incidentcount, x=feature_cat,
-                 y='mean', category_orders=category_orders)
-    # fig4.write_html('hist_test4.html')
+    # fig = px.bar(df_incidentcount, x=feature_cat,
+    #              y='mean', category_orders=category_orders)
 
-    # putting all figures in one
-    # fig = make_subplots(rows=3, cols=1, subplot_titles=("Histogram of the categorized Data", "Total number of incidents in each category", "Comparitive Likelihood"))
-    # # for trace in fig1.data:
-    # #     fig.add_trace(trace, 1, 1)
-    # for trace in fig2.data:
-    #     fig.add_trace(trace, 1, 1)
-    # for trace in fig3.data:
-    #     fig.add_trace(trace, 2, 1)
-    # for trace in fig4.data:
-    #     fig.add_trace(trace, 3, 1)
+    xVal = df_incidentcount[feature_cat]
+    yVal = df_incidentcount['mean']
 
     layout = go.Layout(
-        bargap=0.05,
-        autosize=True,
+        bargap=0.1,
         bargroupgap=0,
-        # barmode="group",
-        yaxis_title_text='Comparitive Likelihood per category of '+feature,
-        xaxis_title_text='Categories of '+feature,
-        margin=go.layout.Margin(l=10, r=0, t=10, b=10),
+        barmode="group",
+        margin=go.layout.Margin(l=10, r=0, t=0, b=10),
         showlegend=False,
         plot_bgcolor="#31302F",
         paper_bgcolor="#31302F",
         dragmode="select",
         font=dict(color="white"),
         yaxis=dict(
+            range=[0, max(yVal)],
             showticklabels=False,
             showgrid=False,
             fixedrange=True,
             rangemode="nonnegative",
             zeroline=False,
         ),
+        # annotations=[
+        #     dict(
+        #         x=xi,
+        #         y=yi,
+        #         text=str("{:.4f}".format(yi)),
+        #         xanchor="center",
+        #         yanchor="auto",
+        #         showarrow=False,
+        #         font=dict(color="white"),
+        #     )
+        #     for xi, yi in zip(xVal, yVal)
+        # ],
     )
 
-    #fig.update_layout(title_text="Using update_layout() With Graph Object Figures", title_font_size=30)
-    fig.update_layout(layout)
-    return fig
+    return go.Figure(
+        data=[
+            go.Bar(x=xVal, y=yVal, marker=dict(
+                color=np.array(colorVal))),  # , hoverinfo="x"
+        ],
+        layout=layout,
+    )
+
+    # layout = go.Layout(
+    #     bargap=0.05,
+    #     autosize=True,
+    #     bargroupgap=0,
+    #     # barmode="group",
+    #     yaxis_title_text='Comparitive Likelihood per category of '+feature,
+    #     xaxis_title_text='Categories of '+feature,
+    #     margin=go.layout.Margin(l=10, r=0, t=10, b=10),
+    #     showlegend=False,
+    #     plot_bgcolor="#31302F",
+    #     paper_bgcolor="#31302F",
+    #     dragmode="select",
+    #     font=dict(color="white"),
+    #     yaxis=dict(
+    #         showticklabels=False,
+    #         showgrid=False,
+    #         fixedrange=True,
+    #         rangemode="nonnegative",
+    #         zeroline=False,
+    #     ),
+    # )
+
+    # #fig.update_layout(title_text="Using update_layout() With Graph Object Figures", title_font_size=30)
+    # fig.update_layout(layout)
+    # return fig
 
 
 def incidentsfeaturecombo(result, datemonth):
+    colorVal = ["#2202d1"]*25
     All_Possible_Dic, All_Possible_Filters = Filter_Combo_Builder()
     result = categorize_numerical_features(
         result[['incident_occurred', 'congestion_mean', 'temp_mean', 'precip_mean', 'is_weekend']])
     result = FILTER_calculator(
         result[['incident_occurred'] + list(All_Possible_Filters.keys())], All_Possible_Dic, 'All')
     result = result.rename(
-        columns={'Average_Number_Incidents': 'Comparitive Likelihood'})
+        columns={'Average_Number_Incidents': 'Comparitive Likelihood', "No_Filter": "Baseline"})
     # drawing
+
+    xVal = result['Tag']
+    yVal = result['Comparitive Likelihood']
+
+    layout = go.Layout(
+        bargap=0.1,
+        bargroupgap=0,
+        barmode="group",
+        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+        showlegend=False,
+        plot_bgcolor="#31302F",
+        paper_bgcolor="#31302F",
+        dragmode="select",
+        font=dict(color="white"),
+        yaxis=dict(
+            range=[0, max(yVal) + max(yVal) / 4],
+            showticklabels=False,
+            showgrid=False,
+            fixedrange=True,
+            rangemode="nonnegative",
+            zeroline=False,
+        ),
+        annotations=[
+            dict(
+                x=xi,
+                y=yi,
+                text=str("{:.3f}".format(yi)),
+                xanchor="center",
+                yanchor="bottom",
+                showarrow=False,
+                font=dict(color="white"),
+            )
+            for xi, yi in zip(xVal, yVal)
+        ],
+    )
+
+    return go.Figure(
+        data=[
+            go.Bar(x=xVal, y=yVal, marker=dict(
+                color=np.array(colorVal))),  # , hoverinfo="x"
+        ],
+        layout=layout,
+    )
+
     fig = px.bar(result, x='Tag', y='Comparitive Likelihood')
     layout = go.Layout(
         bargap=0.05,
@@ -1231,6 +1335,18 @@ def totals(result, datemonth):
     return fig
 
 # %%
+
+
+@app.callback(
+    Output('feature-selector', 'style'),
+    [Input("histogram-basis", "active_tab")]
+)
+def update_bar_chart_style(histogramkind):
+
+    if histogramkind == "incidentsfeature":
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
 
 
 @app.callback(
