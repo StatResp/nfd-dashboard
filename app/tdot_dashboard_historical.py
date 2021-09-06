@@ -1,4 +1,6 @@
 # %%
+import time
+from resource import *
 import traceback
 import dateparser
 from matplotlib import cm, colors
@@ -6,9 +8,10 @@ import dash
 import flask
 import pyarrow.parquet as pq
 import os
-#from flask_caching import Cache
+# from flask_caching import Cache
 from dask import dataframe as dd
 from random import randint
+from flask_caching import Cache
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
@@ -19,10 +22,10 @@ from plotly import graph_objs as go
 from plotly.graph_objs import *
 from datetime import datetime as dt
 from datetime import time as tt
-#import dataextract
+# import dataextract
 import os
 import sys
-#import resource
+# import resource
 import geopandas as gpd
 import dash_bootstrap_components as dbc
 from statresp.datajoin.cleaning.categorizer import categorize_numerical_features, Filter_Combo_Builder, FILTER_calculator
@@ -59,13 +62,14 @@ available_features = ['is_weekend', 'window',
                       ]
 df_merged = pd.read_parquet(metadata['merged_pickle_address'],
                             columns=available_features+['time_local', 'county', 'incident_occurred'])
-#if metadata['incident_pickle_address'][-4:] == '.pkl':
+# if metadata['incident_pickle_address'][-4:] == '.pkl':
 #    df = pd.read_pickle(metadata['incident_pickle_address'])
-#else:
+# else:
 #
-# 
-df = pd.read_parquet(metadata['incident_pickle_address'], columns=['frc','incident_id','county_inrix','time_local', 'day_of_week','month','gps_coordinate_longitude', 'gps_coordinate_latitude'])
- 
+#
+df = pd.read_parquet(metadata['incident_pickle_address'], columns=['frc', 'incident_id', 'county_inrix',
+                     'time_local', 'day_of_week', 'month', 'gps_coordinate_longitude', 'gps_coordinate_latitude'])
+
 
 df = df[df['frc'] == 0]
 # df=df.iloc[0:1000]
@@ -90,6 +94,9 @@ app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, externa
                 {"name": "viewport", "content": "width=device-width"}])
 app.title = 'Incident Dashboard'
 
+cache = Cache(app.server,
+              config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
+
 # cache = Cache(app.server,
 #               config=dict(CACHE_TYPE='filesystem', CACHE_DEFAULT_TIMEOUT=10000, CACHE_DIR='cache-directory'))
 
@@ -97,11 +104,9 @@ app.title = 'Incident Dashboard'
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 px.set_mapbox_access_token(mapbox_access_token)
 
-from resource import *
-import time
 
 # a non CPU-bound task
-#time.sleep(3)
+# time.sleep(3)
 print(getrusage(RUSAGE_SELF))
 
 
@@ -242,7 +247,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                  children=[
                                      dcc.Markdown(
                                          '''## Incident Time'''),
-                                     #html.P("""Select Time Range""",style={'text-align': 'left' ,'font-weight':'bold'}),
+                                     # html.P("""Select Time Range""",style={'text-align': 'left' ,'font-weight':'bold'}),
                                      dcc.RangeSlider(
                                          id='time-slider',
                                          min=0,
@@ -299,9 +304,9 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                                                   'label': "Visibility"},
                                                                  {'value': 'precip_mean',
                                                                   'label': "Precipitation"},
-                                                                 #{'value': 'mean_incidents_last_7_days',
+                                                                 # {'value': 'mean_incidents_last_7_days',
                                                                  # 'label': "Incidents in past Week"},
-                                                                 #{'value': 'mean_incidents_last_4_weeks', 'label': "Incidents in past Month"}, 
+                                                                 # {'value': 'mean_incidents_last_4_weeks', 'label': "Incidents in past Month"},
                                                                  ],
                                                              value='temp_mean',
                                                              id='feature',
@@ -372,14 +377,14 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
 
 # Incident Filterings
 
-
+@cache.memoize()
 def return_incidents(start_date, end_date, counties, months, timerange,   days):
     start_date = dateparser.parse(start_date)
     end_date = dateparser.parse(end_date)
 
-    #print('start_date  :',type(start_date),start_date)
+    # print('start_date  :',type(start_date),start_date)
     # print('time_local  :', type(df[['time_local']]), df['time_local'].iloc[0])
-    #print(df['time_local'] >= start_date)
+    # print(df['time_local'] >= start_date)
     # print(len(df))
 
     # try:
@@ -387,7 +392,7 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
         date_condition = ((df['time_local'] >= start_date)
                           & (df['time_local'] <= end_date))
         # date_condition=True
-        #print("set date condition")
+        # print("set date condition")
         if days is None or len(days) == 0:
             weekday_condition = (True)
         else:
@@ -405,7 +410,7 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
         else:
             county_condition = ((df['county_inrix'].isin(counties)))
 
-        #print("going to set time condition")
+        # print("going to set time condition")
 
         starttime = tt(hour=hourmin)
         if hourmax != 24:
@@ -415,7 +420,7 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
         timecondition = ((df['time_local'].dt.time >= starttime)
                          & (df['time_local'].dt.time <= endtime))
         # timecondition=True
-        #result = df[timecondition & date_condition & month_condition & weekday_condition & county_condition].compute()
+        # result = df[timecondition & date_condition & month_condition & weekday_condition & county_condition].compute()
         result = df[timecondition & date_condition &
                     month_condition & weekday_condition & county_condition]
         result = result.sort_values(by=['time_local'])
@@ -429,12 +434,14 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
     return result
 
 
+@cache.memoize()
 def return_merged(start_date, end_date, counties, months, timerange, days):
     start_date = dateparser.parse(start_date)
     end_date = dateparser.parse(end_date)
     '''
     print('start_date:',type(start_date),start_date)
-    print('alarm_datetime:', type(df[['alarm_datetime']]), df['alarm_datetime'].iloc[0])
+    print('alarm_datetime:', type(
+        df[['alarm_datetime']]), df['alarm_datetime'].iloc[0])
     print(df['alarm_datetime'] >= start_date)
     print(len(df))
     '''
@@ -533,7 +540,7 @@ def return_empty_fig():
     }
 
 
-# %%
+@cache.memoize()
 @app.callback(
     Output('map-graph', 'figure'),
     [Input("date-picker", "date"),
@@ -664,6 +671,7 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
     return fig
 
 
+@cache.memoize()
 @app.callback(
     Output('map-incidents-month', 'figure'),
     [Input("date-picker", "date"),
@@ -831,6 +839,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
     return fig
 
 
+@cache.memoize()
 def hourhist(result, datemonth):
 
     result['hour'] = result['time_local'].dt.hour
@@ -869,7 +878,7 @@ def hourhist(result, datemonth):
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
-            showgrid=False,
+            showgrid=True,
             fixedrange=True,
             rangemode="nonnegative",
             zeroline=False,
@@ -897,6 +906,7 @@ def hourhist(result, datemonth):
     )
 
 
+@cache.memoize()
 def dayhist(result, datemonth):
     result = result.groupby(['day_of_week']).count().reset_index()
     result['count'] = result['incidentNumber']
@@ -929,7 +939,7 @@ def dayhist(result, datemonth):
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
-            showgrid=False,
+            showgrid=True,
             fixedrange=True,
             rangemode="nonnegative",
             zeroline=False,
@@ -957,6 +967,7 @@ def dayhist(result, datemonth):
     )
 
 
+@cache.memoize()
 def responsehist(result, datemonth):
 
     fig = px.histogram(result, x="responsetime",   labels={
@@ -972,6 +983,7 @@ def responsehist(result, datemonth):
     return fig
 
 
+@cache.memoize()
 def responsetimebymonth(result, datemonth):
     fig = px.box(result, x="month",  y="responsetime")
     fig.update_xaxes(
@@ -983,7 +995,7 @@ def responsetimebymonth(result, datemonth):
     fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
         l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"), xaxis=dict(
             range=[0, 13],
-            showgrid=False,
+            showgrid=True,
             tickvals=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
             ticktext=['Jan', 'Feb', 'March', 'Apr', 'May', 'June',
                       'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -993,6 +1005,7 @@ def responsetimebymonth(result, datemonth):
     return fig
 
 
+@cache.memoize()
 def responsetimebytod(result, datemonth):
     result['hour'] = result['time_local'].dt.hour
     fig = px.box(result, x="hour",  y="responsetime")
@@ -1005,7 +1018,7 @@ def responsetimebytod(result, datemonth):
     fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
         l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"), xaxis=dict(
             range=[-1, 25],
-            showgrid=False,
+            showgrid=True,
             tickvals=[x for x in range(0, 24)],
             ticktext=['12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
                       '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'],
@@ -1015,6 +1028,7 @@ def responsetimebytod(result, datemonth):
     return fig
 
 
+@cache.memoize()
 def responsetimebyweekday(result, datemonth):
     fig = px.box(result, x="day_of_week",  y="responsetime")
     fig.update_xaxes(
@@ -1026,7 +1040,7 @@ def responsetimebyweekday(result, datemonth):
     fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
         l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"), xaxis=dict(
             range=[-1, 8],
-            showgrid=False,
+            showgrid=True,
             tickvals=[0, 1, 2, 3, 4, 5, 6],
             ticktext=['Mon', 'Tues', 'Wed', 'Thur', 'Friday', 'Sat', 'Sun'],
             fixedrange=True,
@@ -1035,8 +1049,9 @@ def responsetimebyweekday(result, datemonth):
     return fig
 
 
+@cache.memoize()
 def monthhist(result, datemonth):
-    #result['month'] = result['month'].astype(str)
+    # result['month'] = result['month'].astype(str)
     colorVal = ["#2202d1"]*25
     result = result.groupby(['month']).count().reset_index()
     result['count'] = result['incidentNumber']
@@ -1072,7 +1087,7 @@ def monthhist(result, datemonth):
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
-            showgrid=False,
+            showgrid=True,
             fixedrange=True,
             rangemode="nonnegative",
             zeroline=False,
@@ -1100,13 +1115,14 @@ def monthhist(result, datemonth):
     )
 
 
+@cache.memoize()
 def incidentsfeature(df_merged, feature):
     colorVal = ["#2202d1"]*25
     feature_cat = feature+'_cat_'
     df_merged_ = categorize_numerical_features(
         df_merged[[feature, metadata['pred_name_TF']]])
     # making sure all subplots will have the same category order
-    category_orders = {feature_cat: df_merged_[feature_cat].cat.categories}
+    # category_orders = {feature_cat: df_merged_[feature_cat].cat.categories}
     # #Drawing the first figure; histogram of the feature
     # if len(df_merged)<1e6:
     #     fig1 = px.histogram(df_merged_[[feature]], x=feature, nbins=20)
@@ -1120,52 +1136,89 @@ def incidentsfeature(df_merged, feature):
     # Drawing the second figure; histogram of the categorized feature
     # df_merged_cat_barplot = df_merged_[[metadata['pred_name_TF'], feature_cat]].groupby(
     #    feature_cat).agg('count').rename(columns={metadata['pred_name_TF']: 'freq'}).reset_index()
-    #fig2 = px.bar(df_merged_cat_barplot, x=feature_cat, y='freq', category_orders=category_orders)
+    # fig2 = px.bar(df_merged_cat_barplot, x=feature_cat, y='freq', category_orders=category_orders)
     # fig2.write_html('hist_test2.html')
     # Drawing the third figure; total number of incidents given each category of the selected feature
     df_incidentcount = df_merged_[[metadata['pred_name_TF'], feature_cat]].groupby(
         feature_cat).agg(['mean', 'sum'])
     df_incidentcount.columns = ['mean', 'sum']
     df_incidentcount = df_incidentcount.reset_index()
-    #fig3 = px.bar(df_incidentcount, x=feature_cat, y='sum',category_orders=category_orders)
+    # fig3 = px.bar(df_incidentcount, x=feature_cat, y='sum',category_orders=category_orders)
     # fig3.write_html('hist_test3.html')
     # Drawing the fourth figure; mean (normalized) number of incidents given each category of the selected feature
     # fig = px.bar(df_incidentcount, x=feature_cat,
     #              y='mean', category_orders=category_orders)
 
-    xVal = df_incidentcount[feature_cat]
-    yVal = df_incidentcount['mean']
+    xVal = df_incidentcount[feature_cat].tolist()
+    yVal = df_incidentcount['mean'].tolist()
+
+    if feature == 'window':
+        for index in range(len(xVal)):
+            x=xVal[index]
+            if x == "0":
+                xVal[index] = "12AM-4AM"
+            elif x== "1":
+                xVal[index] = "4AM-8AM"
+            elif x=="2":
+                xVal[index] = "8AM-12PM"
+            elif x=="3":
+                xVal[index] = "12PM-4PM"
+            elif x=="4":
+                xVal[index] = "4PM-8PM"
+            elif x=="5":
+                xVal[index] = "8PM-12AM"    
+
+    if feature == 'lanes':
+        for index in range(len(xVal)):
+            x=xVal[index]
+            if x == "0":
+                xVal[index] = "Zero"
+            elif x== "1":
+                xVal[index] = "One"
+            elif x=="2":
+                xVal[index] = "Two"
+            elif x=="3":
+                xVal[index] = "Three"
+            elif x=="4":
+                xVal[index] = "Four"
+            elif x=="5":
+                xVal[index] = "Five"  
+            elif x=="6":
+                xVal[index] = "Six"
+            elif x=="7":
+                xVal[index] = "Seven"
+
 
     layout = go.Layout(
         bargap=0.1,
         bargroupgap=0,
         barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=10),
+        margin=go.layout.Margin(l=10, r=0, t=10, b=10),
         showlegend=False,
         plot_bgcolor="#31302F",
         paper_bgcolor="#31302F",
         dragmode="select",
         font=dict(color="white"),
         yaxis=dict(
-            range=[0, max(yVal)],
+           range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
-            showgrid=False,
+            showgrid=True,
             fixedrange=True,
             rangemode="nonnegative",
             zeroline=False,
         ),
-        # annotations=[
-        #     dict(
-        #         x=xi,
-        #         y=yi,
-        #         text=str("{:.4f}".format(yi)),
-        #         xanchor="center",
-        #         yanchor="auto",
-        #         showarrow=False,
-        #         font=dict(color="white"),
-        #     )
-        #     for xi, yi in zip(xVal, yVal)
-        # ],
+        annotations=[
+            dict(
+                x=xi,
+                y=yi,
+                text=str("{:.4f}".format(yi)),
+                xanchor="center",
+                yanchor="top",
+                showarrow=False,
+                font=dict(color="white"),
+            )
+            for xi, yi in zip(xVal, yVal)
+        ],
     )
 
     return go.Figure(
@@ -1191,7 +1244,7 @@ def incidentsfeature(df_merged, feature):
     #     font=dict(color="white"),
     #     yaxis=dict(
     #         showticklabels=False,
-    #         showgrid=False,
+    #         showgrid=True,
     #         fixedrange=True,
     #         rangemode="nonnegative",
     #         zeroline=False,
@@ -1202,7 +1255,7 @@ def incidentsfeature(df_merged, feature):
     # fig.update_layout(layout)
     # return fig
 
-
+@cache.memoize()
 def incidentsfeaturecombo(result, datemonth):
     colorVal = ["#2202d1"]*25
     All_Possible_Dic, All_Possible_Filters = Filter_Combo_Builder()
@@ -1221,7 +1274,7 @@ def incidentsfeaturecombo(result, datemonth):
         bargap=0.1,
         bargroupgap=0,
         barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
+        margin=go.layout.Margin(l=10, r=0, t=10, b=10),
         showlegend=False,
         plot_bgcolor="#31302F",
         paper_bgcolor="#31302F",
@@ -1230,7 +1283,7 @@ def incidentsfeaturecombo(result, datemonth):
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
-            showgrid=False,
+            showgrid=True,
             fixedrange=True,
             rangemode="nonnegative",
             zeroline=False,
@@ -1280,17 +1333,17 @@ def incidentsfeaturecombo(result, datemonth):
     fig.update_layout(layout)
     return fig
 
-
+@cache.memoize()
 def totals(result, datemonth):
-    #result['month'] = result['month'].astype(str)
+    # result['month'] = result['month'].astype(str)
     # colorVal = ["#2202d1"]*25
 
     resultgroup = result.groupby(
         'month-year').agg({'incidentNumber': 'count', 'time_local': 'first'})
     resultgroup = resultgroup.reset_index()
     resultgroup = resultgroup.sort_values(by=['time_local'])
-    #result = result.groupby(['month-year']).count().reset_index()
-    #result['count'] = result['incidentNumber']
+    # result = result.groupby(['month-year']).count().reset_index()
+    # result['count'] = result['incidentNumber']
     fig = px.line(resultgroup, x="month-year",
                   y="incidentNumber", title='Total Incidents')
     fig.update_xaxes(
@@ -1317,7 +1370,7 @@ def totals(result, datemonth):
     #     yaxis=dict(
     #         range=[0, max(yVal) + max(yVal) / 4],
     #         showticklabels=False,
-    #         showgrid=False,
+    #         showgrid=True,
     #         fixedrange=True,
     #         rangemode="nonnegative",
     #         zeroline=False,

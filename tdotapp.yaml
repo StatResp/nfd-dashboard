@@ -1,5 +1,5 @@
 service: default 
-runtime: python39
+runtime: custom
 env: flexible
 threadsafe: true
 handlers:
@@ -26,5 +26,3 @@ readiness_check:
   failure_threshold: 2
   success_threshold: 2
   app_start_timeout_sec: 300
-
-entrypoint: gunicorn -b 0.0.0.0:8080  --worker-class gevent --threads 8 -t 100  --chdir app tdot_dashboard_historical:server

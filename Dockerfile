@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.9
 
 COPY requirements.txt /
 RUN set -ex && \
@@ -8,4 +8,4 @@ COPY ./app /app
 
 WORKDIR /app
 
-CMD exec python incident_dashboard.py
+CMD exec gunicorn -b 0.0.0.0:8080  --worker-class gevent --threads 8 -t 100 tdot_dashboard_historical:server
