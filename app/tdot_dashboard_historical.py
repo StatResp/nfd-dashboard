@@ -278,7 +278,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                  ),
 
                                                                     html.Div(id="feature-selector",
-                                                     className="card p-0 m-0 bg-dark", style={"display": "none"},
+                                                     className="card p-0 m-0 bg-dark",
                                                      children=[
                                                           dcc.Markdown(
                                                               '''## Select Feature for Likelihood Analysis'''),
@@ -1401,16 +1401,16 @@ def totals(result, datemonth):
 # %%
 
 
-@app.callback(
-    Output('feature-selector', 'style'),
-    [Input("histogram-basis", "active_tab")]
-)
-def update_bar_chart_style(histogramkind):
+# @app.callback(
+#     Output('feature-selector', 'style'),
+#     [Input("histogram-basis", "active_tab")]
+# )
+# def update_bar_chart_style(histogramkind):
 
-    if histogramkind == "incidentsfeature":
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
+#     if histogramkind == "incidentsfeature":
+#         return {'display': 'block'}
+#     else:
+#         return {'display': 'none'}
 
 
 @app.callback(
