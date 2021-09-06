@@ -12,4 +12,4 @@ handlers:
   redirect_http_response_code: 301
 
 
-entrypoint: gunicorn -b 0.0.0.0:8080  --worker-class gevent --threads 8 -t 100  --chdir app tdot_dashboard:server
+entrypoint: gunicorn -b 0.0.0.0:8080  --worker-class gevent --threads 8 -t 100  --chdir app tdot_dashboard_historical:server
