@@ -59,10 +59,13 @@ available_features = ['is_weekend', 'window',
                       ]
 df_merged = pd.read_parquet(metadata['merged_pickle_address'],
                             columns=available_features+['time_local', 'county', 'incident_occurred'])
-if metadata['incident_pickle_address'][-4:] == '.pkl':
-    df = pd.read_pickle(metadata['incident_pickle_address'])
-else:
-    df = pd.read_parquet(metadata['incident_pickle_address'])
+#if metadata['incident_pickle_address'][-4:] == '.pkl':
+#    df = pd.read_pickle(metadata['incident_pickle_address'])
+#else:
+#
+# 
+df = pd.read_parquet(metadata['incident_pickle_address'], columns=['frc','incident_id','county_inrix','time_local', 'day_of_week','month','gps_coordinate_longitude', 'gps_coordinate_latitude'])
+ 
 
 df = df[df['frc'] == 0]
 # df=df.iloc[0:1000]
@@ -70,8 +73,8 @@ df['month-year'] = df['time_local'].dt.strftime('%b %Y')
 df = df.rename(columns={'gps_coordinate_longitude': 'longitude',
                         'gps_coordinate_latitude': 'latitude', 'incident_id': 'incidentNumber'})
 
-startdate = df['time_local'].dt.date.min()
-enddate = df['time_local'].dt.date.max()
+startdate = df_merged['time_local'].dt.date.min()
+enddate = df_merged['time_local'].dt.date.max()
 counties = df.county_inrix.drop_duplicates()
 tncounties = pd.read_csv('counties.csv')
 tncounties['county'] = tncounties['county'].str.lower()
@@ -93,6 +96,14 @@ app.title = 'Incident Dashboard'
 
 mapbox_access_token = "pk.eyJ1Ijoidmlzb3ItdnUiLCJhIjoiY2tkdTZteWt4MHZ1cDJ4cXMwMnkzNjNwdSJ9.-O6AIHBGu4oLy3dQ3Tu2XA"
 px.set_mapbox_access_token(mapbox_access_token)
+
+from resource import *
+import time
+
+# a non CPU-bound task
+#time.sleep(3)
+print(getrusage(RUSAGE_SELF))
+
 
 # setup the app frameworks and main layout
 # Layout of Dash App
