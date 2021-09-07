@@ -68,7 +68,7 @@ df_merged = pd.read_parquet(metadata['merged_pickle_address'],
 #
 #
 df = pd.read_parquet(metadata['incident_pickle_address'], columns=['frc', 'incident_id', 'county_inrix',
-                     'time_local', 'day_of_week', 'month', 'gps_coordinate_longitude', 'gps_coordinate_latitude'])
+                                                                   'time_local', 'day_of_week', 'month', 'gps_coordinate_longitude', 'gps_coordinate_latitude'])
 
 
 df = df[df['frc'] == 0]
@@ -243,6 +243,44 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                 )
                             ],
                         ),
+
+                        html.Div(id="feature-selector",
+                                 className="card p-0 m-0 bg-dark",
+                                 children=[
+                                     dcc.Markdown(
+                                         '''## Select Feature for Likelihood Analysis'''),
+                                     dcc.Dropdown(
+                                         options=[
+                                             {'value': 'is_weekend',
+                                              'label': 'Weekend'},
+                                             {'value': 'window',
+                                              'label': 'Time of Day'},
+                                             {'value': 'reference_speed_mean',
+                                              'label': 'Reference Speed'},
+                                             {'value': 'congestion_mean',
+                                              'label': 'Traffic Congestion'},
+                                             {'value': 'lanes',
+                                              'label': "Number of Lanes"},
+                                             # {'value': 'ends_ele_diff',
+                                             #  'label': "Elevation Change"},
+                                             {'value': 'temp_mean',
+                                              'label': "Temperature"},
+                                             {'value': 'wind_spd_mean',
+                                              'label': "Windspeed"},
+                                             {'value': 'vis_mean',
+                                              'label': "Visibility"},
+                                             {'value': 'precip_mean',
+                                              'label': "Precipitation"},
+                                             # {'value': 'mean_incidents_last_7_days',
+                                             # 'label': "Incidents in past Week"},
+                                             # {'value': 'mean_incidents_last_4_weeks', 'label': "Incidents in past Month"},
+                                         ],
+                                         value='temp_mean',
+                                         id='feature',
+                                         multi=False,
+                                     ),
+                                 ],
+                                 ),
                         html.Div(className="card p-1 m-1 bg-dark",
                                  children=[
                                      dcc.Markdown(
@@ -277,43 +315,6 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                  ]
                                  ),
 
-                                                                    html.Div(id="feature-selector",
-                                                     className="card p-0 m-0 bg-dark",
-                                                     children=[
-                                                          dcc.Markdown(
-                                                              '''## Select Feature for Likelihood Analysis'''),
-                                                         dcc.Dropdown(
-                                                             options=[
-                                                                 {'value': 'is_weekend',
-                                                                  'label': 'Weekend'},
-                                                                 {'value': 'window',
-                                                                  'label': 'Time of Day'},
-                                                                 {'value': 'reference_speed_mean',
-                                                                  'label': 'Reference Speed'},
-                                                                 {'value': 'congestion_mean',
-                                                                  'label': 'Traffic Congestion'},
-                                                                 {'value': 'lanes',
-                                                                  'label': "Number of Lanes"},
-                                                                # {'value': 'ends_ele_diff',
-                                                                #  'label': "Elevation Change"},
-                                                                 {'value': 'temp_mean',
-                                                                  'label': "Temperature"},
-                                                                 {'value': 'wind_spd_mean',
-                                                                  'label': "Windspeed"},
-                                                                 {'value': 'vis_mean',
-                                                                  'label': "Visibility"},
-                                                                 {'value': 'precip_mean',
-                                                                  'label': "Precipitation"},
-                                                                 # {'value': 'mean_incidents_last_7_days',
-                                                                 # 'label': "Incidents in past Week"},
-                                                                 # {'value': 'mean_incidents_last_4_weeks', 'label': "Incidents in past Month"},
-                                                                 ],
-                                                             value='temp_mean',
-                                                             id='feature',
-                                                             multi=False,
-                                                         ),
-                                                     ],
-                                                     ),
                         html.Div(className="card p-1 m-1 bg-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                                                                              html.P(
                             'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
@@ -660,7 +661,7 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
                 x=0.45,
                 y=0.02,
                 xanchor="left",
-                yanchor="bottom",
+                yanchor="top",
                 bgcolor="#1E1E1E",
                 borderwidth=1,
                 bordercolor="#6d6d6d",
@@ -771,7 +772,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                               x=0.45,
                               y=0.02,
                               xanchor="left",
-                              yanchor="bottom",
+                              yanchor="top",
                               bgcolor="#1E1E1E",
                               borderwidth=1,
                               bordercolor="#6d6d6d",
@@ -889,7 +890,7 @@ def hourhist(result, datemonth):
                 y=yi,
                 text=str(yi),
                 xanchor="center",
-                yanchor="bottom",
+                yanchor="top",
                 showarrow=False,
                 font=dict(color="white"),
             )
@@ -950,7 +951,7 @@ def dayhist(result, datemonth):
                 y=yi,
                 text=str(yi),
                 xanchor="center",
-                yanchor="bottom",
+                yanchor="top",
                 showarrow=False,
                 font=dict(color="white"),
             )
@@ -1098,7 +1099,7 @@ def monthhist(result, datemonth):
                 y=yi,
                 text=str(yi),
                 xanchor="center",
-                yanchor="bottom",
+                yanchor="top",
                 showarrow=False,
                 font=dict(color="white"),
             )
@@ -1154,40 +1155,39 @@ def incidentsfeature(df_merged, feature):
 
     if feature == 'window':
         for index in range(len(xVal)):
-            x=xVal[index]
+            x = xVal[index]
             if x == "0":
                 xVal[index] = "12AM-4AM"
-            elif x== "1":
+            elif x == "1":
                 xVal[index] = "4AM-8AM"
-            elif x=="2":
+            elif x == "2":
                 xVal[index] = "8AM-12PM"
-            elif x=="3":
+            elif x == "3":
                 xVal[index] = "12PM-4PM"
-            elif x=="4":
+            elif x == "4":
                 xVal[index] = "4PM-8PM"
-            elif x=="5":
-                xVal[index] = "8PM-12AM"    
+            elif x == "5":
+                xVal[index] = "8PM-12AM"
 
     if feature == 'lanes':
         for index in range(len(xVal)):
-            x=xVal[index]
+            x = xVal[index]
             if x == "0":
                 xVal[index] = "Zero"
-            elif x== "1":
+            elif x == "1":
                 xVal[index] = "One"
-            elif x=="2":
+            elif x == "2":
                 xVal[index] = "Two"
-            elif x=="3":
+            elif x == "3":
                 xVal[index] = "Three"
-            elif x=="4":
+            elif x == "4":
                 xVal[index] = "Four"
-            elif x=="5":
-                xVal[index] = "Five"  
-            elif x=="6":
+            elif x == "5":
+                xVal[index] = "Five"
+            elif x == "6":
                 xVal[index] = "Six"
-            elif x=="7":
+            elif x == "7":
                 xVal[index] = "Seven"
-
 
     layout = go.Layout(
         bargap=0.1,
@@ -1200,7 +1200,7 @@ def incidentsfeature(df_merged, feature):
         dragmode="select",
         font=dict(color="white"),
         yaxis=dict(
-           range=[0, max(yVal) + max(yVal) / 4],
+            range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
             showgrid=True,
             fixedrange=True,
@@ -1255,6 +1255,7 @@ def incidentsfeature(df_merged, feature):
     # fig.update_layout(layout)
     # return fig
 
+
 @cache.memoize()
 def incidentsfeaturecombo(result, datemonth):
     colorVal = ["#2202d1"]*25
@@ -1294,7 +1295,7 @@ def incidentsfeaturecombo(result, datemonth):
                 y=yi,
                 text=str("{:.3f}".format(yi)),
                 xanchor="center",
-                yanchor="bottom",
+                yanchor="top",
                 showarrow=False,
                 font=dict(color="white"),
             )
@@ -1332,6 +1333,7 @@ def incidentsfeaturecombo(result, datemonth):
     )
     fig.update_layout(layout)
     return fig
+
 
 @cache.memoize()
 def totals(result, datemonth):
@@ -1381,7 +1383,7 @@ def totals(result, datemonth):
     #             y=yi,
     #             text=str(yi),
     #             xanchor="center",
-    #             yanchor="bottom",
+    #             yanchor="top",
     #             showarrow=False,
     #             font=dict(color="white"),
     #         )
