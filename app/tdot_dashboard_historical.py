@@ -44,10 +44,11 @@ pd.set_option('display.max_columns', None)
 
 latInitial = 36.16228
 lonInitial = -86.774372
-metadata = {}
-metadata['merged_pickle_address'] = 'data/tdot/merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
-metadata['incident_pickle_address'] = 'data/tdot/incident'
-metadata['pred_name_TF'] = 'incident_occurred'
+metadata={}                     
+#metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
+metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top100percent_segments_grouped_nona'
+metadata['incident_pickle_address']='data/raw/cleaned/for_cloud/incident_tdot'
+metadata['pred_name_TF']='incident_occurred'
 
 # available_features = ['is_weekend', 'window',
 #                       'speed_mean', 'average_speed_mean', 'reference_speed_mean', 'congestion_mean', 'miles', 'lanes',
