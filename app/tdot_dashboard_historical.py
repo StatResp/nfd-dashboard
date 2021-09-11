@@ -44,10 +44,11 @@ pd.set_option('display.max_columns', None)
 
 latInitial = 36.16228
 lonInitial = -86.774372
-metadata = {}
-metadata['merged_pickle_address'] = 'data/tdot/merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
-metadata['incident_pickle_address'] = 'data/tdot/incident'
-metadata['pred_name_TF'] = 'incident_occurred'
+metadata={}                     
+#metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
+metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top100percent_segments_grouped_nona'
+metadata['incident_pickle_address']='data/raw/cleaned/for_cloud/incident_tdot'
+metadata['pred_name_TF']='incident_occurred'
 
 # available_features = ['is_weekend', 'window',
 #                       'speed_mean', 'average_speed_mean', 'reference_speed_mean', 'congestion_mean', 'miles', 'lanes',
@@ -60,8 +61,10 @@ available_features = ['is_weekend', 'window',
                       'isf_length', 'slope_median', 'ends_ele_diff', 'temp_mean', 'wind_spd_mean', 'vis_mean', 'precip_mean',
                       'mean_incidents_last_7_days', 'mean_incidents_last_4_weeks', 'mean_incidents_over_all_windows',
                       ]
-df_merged = pd.read_parquet(metadata['merged_pickle_address'],
-                            columns=available_features+['time_local', 'county', 'incident_occurred'])
+df_merged = pd.read_parquet(metadata['merged_pickle_address'], columns=available_features+['time_local','county','month','incident_occurred'])
+
+if not 'day_of_week' in df_merged.columns:
+    df_merged['day_of_week'] = df_merged['time_local'].dt.dayofweek
 # if metadata['incident_pickle_address'][-4:] == '.pkl':
 #    df = pd.read_pickle(metadata['incident_pickle_address'])
 # else:
