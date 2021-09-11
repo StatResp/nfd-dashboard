@@ -46,8 +46,8 @@ latInitial = 36.16228
 lonInitial = -86.774372
 metadata={}                     
 #metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
-metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top100percent_segments_grouped_nona'
-metadata['incident_pickle_address']='data/raw/cleaned/for_cloud/incident_tdot'
+metadata['merged_pickle_address']='data/tdot/merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
+metadata['incident_pickle_address']='data/tdot/incident'
 metadata['pred_name_TF']='incident_occurred'
 
 # available_features = ['is_weekend', 'window',
@@ -110,7 +110,7 @@ px.set_mapbox_access_token(mapbox_access_token)
 
 # a non CPU-bound task
 # time.sleep(3)
-print(getrusage(RUSAGE_SELF))
+#print(getrusage(RUSAGE_SELF))
 
 
 # setup the app frameworks and main layout
@@ -857,7 +857,7 @@ def hourhist(result, datemonth):
     #         result = result.append(new_row, ignore_index=True)
 
     xVal = result['hour']
-    yVal = result['count']
+    yVal = result['count'].fillna(0)
     colorVal = ["#2202d1"]*25
     layout = go.Layout(
         bargap=0.05,
@@ -891,7 +891,7 @@ def hourhist(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                text=str(yi),
+                 text=(str((yi))) if yi!=0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -920,7 +920,7 @@ def dayhist(result, datemonth):
     # print(result)
     colorVal = ["#2202d1"]*25
     xVal = result['day_of_week']
-    yVal = result['count']
+    yVal = result['count'].fillna(0)
     layout = go.Layout(
         bargap=0.05,
         autosize=True,
@@ -952,7 +952,7 @@ def dayhist(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                text=str(yi),
+                text=(str((yi))) if yi!=0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -1067,7 +1067,7 @@ def monthhist(result, datemonth):
             result = result.append(new_row, ignore_index=True)
     result = result.sort_values('m')
     xVal = result['month']
-    yVal = result['count']
+    yVal = result['count'].fillna(0)
 
     layout = go.Layout(
         bargap=0.1,
@@ -1100,7 +1100,7 @@ def monthhist(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                text=str(yi),
+                text=(str((yi))) if yi!=0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -1154,7 +1154,7 @@ def incidentsfeature(df_merged, feature):
     #              y='mean', category_orders=category_orders)
 
     xVal = df_incidentcount[feature_cat].tolist()
-    yVal = df_incidentcount['mean'].tolist()
+    yVal = df_incidentcount['mean'].fillna(0).tolist()
 
     if feature == 'window':
         for index in range(len(xVal)):
@@ -1214,7 +1214,7 @@ def incidentsfeature(df_merged, feature):
             dict(
                 x=xi,
                 y=yi,
-                text=str("{:.4f}".format(yi)),
+                text=(str("{:.3f}".format(yi))) if yi!=0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -1272,7 +1272,7 @@ def incidentsfeaturecombo(result, datemonth):
     # drawing
 
     xVal = result['Tag']
-    yVal = result['Comparitive Likelihood']
+    yVal = result['Comparitive Likelihood'].fillna(0)
 
     layout = go.Layout(
         bargap=0.1,
@@ -1296,7 +1296,7 @@ def incidentsfeaturecombo(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                text=str("{:.3f}".format(yi)),
+                text=(str("{:.3f}".format(yi))) if yi!=0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,

@@ -220,16 +220,16 @@ def categorize_numerical_features(df: pd.DataFrame) -> pd.DataFrame:
     cat_features = []
 
     for i in list(features.keys()):
-        print('           ',i)
+        #print('           ',i)
         try:
             df[i+'_cat_']=pd.cut(df[i],bins=features[i]['bins'],labels=features[i]['labels'],include_lowest=True, right=True)
             cat_features += [i + '_cat_']
             #df = df.drop([i], axis = 1)
         except Exception as e:
             print(e)
-            print(f"min: {df[i].min()}")
-            print(f"max: {df[i].max()}")
-            print(features[i]['bins'])
+            #print(f"min: {df[i].min()}")
+            #print(f"max: {df[i].max()}")
+            #print(features[i]['bins'])
             print("\n")
     return df
 
@@ -263,7 +263,7 @@ def Filter_Combo_Builder(All_Possible_Filters=None):
 
     def Recursive(Intial_Dic, Length_i, Counter, All_Possible_Dic):
         if Length_i == Length:
-            print(Counter, Length_i, Intial_Dic)
+            #print(Counter, Length_i, Intial_Dic)
             All_Possible_Dic[Counter] = Intial_Dic.copy()
             return Counter + 1, All_Possible_Dic
         else:
@@ -333,13 +333,13 @@ def FILTER_calculator(df_, All_Possible_Dic, Title):
     '''
     df_All_Filtered = pd.DataFrame()
     for j in list(All_Possible_Dic.keys()):
-        print(j, ', ', end='')
+        #print(j, ', ', end='')
         Filter_Dict = All_Possible_Dic[j]
 
         df_new = df_[list(Filter_Dict.keys()) + ['incident_occurred']].copy()
         for i in list(Filter_Dict.keys()):
             if len(Filter_Dict[i]) > 1:
-                # print(i, ': len(Filter_Dict[i])>1')
+                # #print(i, ': len(Filter_Dict[i])>1')
                 df_new[i] = df_new[i].astype('str')
                 df_new[i] = df_new[i].mask(df_new[i].isin(Filter_Dict[i]), '|'.join(Filter_Dict[i]))
             elif Filter_Dict[i] == ['']:
