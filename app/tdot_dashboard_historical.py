@@ -115,7 +115,7 @@ px.set_mapbox_access_token(mapbox_access_token)
 
 # setup the app frameworks and main layout
 # Layout of Dash App
-app.layout = html.Div(className="container-fluid bg-dark text-white", children=[html.Div(
+app.layout = html.Div(className="container-fluid bg-light text-white", children=[html.Div(
     children=[
         html.Div(
             className="row",
@@ -125,17 +125,17 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                     className="col-12 col-lg-3",
                     children=[
                         dcc.Markdown(
-                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard'''),
+                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''',className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
                         html.Div(
-                            className="card p-0 m-0 bg-dark", style={"border": "none"},
+                            className="card p-0 m-0 bg-light", style={"border": "none"},
                             children=[
                                 dcc.Markdown(
-                                    '''Configure the options below for filtering the data.'''),
+                                    '''Configure the options below for filtering the data.''',className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
                             ],
                         ),
-                        html.Div(className="card p-1 m-1 bg-dark", children=[
+                        html.Div(className="card p-1 m-1 bg-light", children=[
                             dcc.Markdown(
-                                '''  # Start Date''', className="p-0 m-0", style={"margin": "0", "padding": "0"}),
+                                '''  # Start Date''', className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
                             dcc.DatePickerSingle(
                                 id="date-picker",
                                 min_date_allowed=startdate,
@@ -148,7 +148,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
 
                         html.Div(
-                            className="card p-1 m-1 bg-dark",
+                            className="card p-1 m-1 bg-light text-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## End Date''', style={"margin": "0", "padding": "0"}),
@@ -165,7 +165,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
 
                         html.Div(
-                            className="card p-1 m-1 bg-dark",
+                            className="card p-1 m-1 bg-light text-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## County'''),
@@ -180,7 +180,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
 
                         html.Div(
-                            className="card p-1 m-1 bg-dark", style={"display": "none"},
+                            className="card p-1 m-1 bg-light", style={"display": "none"},
                             children=[
                                 dcc.Markdown(
                                     '''## Cluster'''),
@@ -195,7 +195,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
                         # Change to side-by-side for mobile layout
                         html.Div(
-                            className="card p-1 m-1 btn-group bg-dark",
+                            className="card p-1 m-1 btn-group bg-light text-dark",
                             children=[
                                 dcc.Markdown('''## Month'''),
                                 # Dropdown to select times
@@ -225,7 +225,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                             ],
                         ),
                         html.Div(
-                            className="card p-1 m-1 bg-dark",
+                            className="card p-1 m-1 bg-light text-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## Days of Week '''),
@@ -248,7 +248,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                         ),
 
                         html.Div(id="feature-selector",
-                                 className="card p-0 m-0 bg-dark",
+                                 className="card p-1 m-1 bg-light text-dark",
                                  children=[
                                      dcc.Markdown(
                                          '''## Select Feature for Likelihood Analysis'''),
@@ -284,7 +284,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                      ),
                                  ],
                                  ),
-                        html.Div(className="card p-1 m-1 bg-dark",
+                        html.Div(className="card p-1 m-1 bg-light text-dark",
                                  children=[
                                      dcc.Markdown(
                                          '''## Incident Time'''),
@@ -302,7 +302,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                  ]
                                  ),
 
-                        html.Div(className="card p-1 m-1 bg-dark",
+                        html.Div(className="card p-1 m-1 bg-light text-dark",
                                  children=[
                                      dcc.Markdown(
                                          '''Adjust Slider below to configure the heatmap intensity.'''),
@@ -318,7 +318,7 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                                  ]
                                  ),
 
-                        html.Div(className="card p-1 m-1 bg-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                        html.Div(className="card p-1 m-1 bg-light text-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                                                                              html.P(
                             'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                             html.P(
@@ -333,32 +333,32 @@ app.layout = html.Div(className="container-fluid bg-dark text-white", children=[
                 html.Div(
                     className="col-12 col-lg-9 p-0 m-0 container-fluid",
                     children=[
-                        html.Div(className="p-2 m-2 card  bg-dark",
+                        html.Div(className="p-0 m-0 card  bg-light text-dark",
                                  children=[
                                      dbc.Tabs(id='tabs', active_tab="incidents", children=[
-                                         dbc.Tab(label='Incidents Total', tab_id='incidents', className="bg-dark text-white", children=[dcc.Loading(
+                                         dbc.Tab(label='Incidents Total', tab_id='incidents', className="bg-light text-white", children=[dcc.Loading(
                                              id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
-                                         dbc.Tab(label='Incidents by Month', tab_id='incidents-month', className="bg-dark text-white", children=[dcc.Loading(
+                                         dbc.Tab(label='Incidents by Month', tab_id='incidents-month', className="bg-light text-white", children=[dcc.Loading(
                                              id="loading-icon-incidents-month", children=[dcc.Graph(id="map-incidents-month"), ], type='default')]),
 
                                      ]
                                      ),
                                  ]),
 
-                        html.Div(className="p-0 m-0 card bg-dark", children=[
+                        html.Div(className="p-0 m-0 card bg-light text-dark", children=[
                             dbc.Tabs(id='histogram-basis', active_tab="month", children=[
                                  dbc.Tab(label='Incident Frequency',
-                                         tab_id='totals', className="bg-dark text-white"),
+                                         tab_id='totals', className="bg-light text-white"),
                                  dbc.Tab(label='Incidents by Month',
-                                         tab_id='month', className="bg-dark text-white"),
+                                         tab_id='month', className="bg-light text-white"),
                                  dbc.Tab(label='Incidents by Weekday',
-                                         tab_id='day', className="bg-dark text-white"),
+                                         tab_id='day', className="bg-light text-white"),
                                  dbc.Tab(label='Incidents by Time of Day',
-                                         tab_id='hour', className="bg-dark text-white"),
+                                         tab_id='hour', className="bg-light text-white"),
                                  dbc.Tab(label='Comparitive Likelihood',
-                                         tab_id='incidentsfeaturecombo', className="bg-dark text-white"),
+                                         tab_id='incidentsfeaturecombo', className="bg-light text-white"),
                                  dbc.Tab(label='Comparitive Likelihood by Feature',
-                                         tab_id='incidentsfeature', className="bg-dark text-white"),
+                                         tab_id='incidentsfeature', className="bg-light text-white"),
 
                                  ]),
                             dcc.Loading(id="loading-icon2", className="flex-grow-1",
@@ -523,8 +523,8 @@ def return_empty_fig():
             "xaxis": {
                 "visible": False
             },
-            "plot_bgcolor": "#1E1E1E",
-            "paper_bgcolor": "#1E1E1E",
+            "plot_bgcolor": "#f8f9fa",
+            "paper_bgcolor": "#f8f9fa",
             "yaxis": {
                 "visible": False
             },
@@ -664,11 +664,11 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
                 x=0.45,
                 y=0.02,
                 xanchor="left",
-                yanchor="top",
-                bgcolor="#1E1E1E",
+                yanchor="bottom",
+                bgcolor="#f8f9fa",
                 borderwidth=1,
                 bordercolor="#6d6d6d",
-                font=dict(color="#FFFFFF"),
+                font=dict(color="#1E1E1E"),
             ),
         ],
     )
@@ -776,16 +776,16 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                               y=0.02,
                               xanchor="left",
                               yanchor="top",
-                              bgcolor="#1E1E1E",
+                              bgcolor="#f8f9fa",
                               borderwidth=1,
                               bordercolor="#6d6d6d",
-                              font=dict(color="#FFFFFF"),
+                              font=dict(color="#1E1E1E"),
                           ),
                       ],
                       )
     fig['layout']['updatemenus'][0]['pad'] = dict(r=0, t=0)
     fig['layout']['sliders'][0]['pad'] = dict(r=0, t=0, b=0, l=0)
-    fig['layout']['sliders'][0]['bgcolor'] = "#1E1E1E"
+    fig['layout']['sliders'][0]['bgcolor'] = "#f8f9fa"
     fig["layout"].pop("sliders")
     fig["layout"]["updatemenus"] = [
         {
@@ -826,10 +826,10 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
             "xanchor": "left",
             "y": 0.02,
             "yanchor": "bottom",
-            "bgcolor": "#1E1E1E",
+            "bgcolor": "#f8f9fa",
             "borderwidth": 1,
             "bordercolor": "#6d6d6d",
-            "font": {"color": "#FFFFFF"}
+            "font": {"color": "#1E1E1E"}
         }
     ]
     for k in range(len(fig.frames)):
@@ -866,10 +866,12 @@ def hourhist(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
+        plot_bgcolor="#f8f9fa",
+        paper_bgcolor="#f8f9fa",
+        title_font_color="#1E1E1E",
         dragmode="select",
-        font=dict(color="white"),
+        font_color="#1E1E1E",
+        font=dict(color="#1E1E1E"),
         xaxis=dict(
             range=[-1, 25],
             showgrid=False,
@@ -928,10 +930,10 @@ def dayhist(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
+        plot_bgcolor="#f8f9fa",
+        paper_bgcolor="#f8f9fa",
         dragmode="select",
-        font=dict(color="white"),
+        font=dict(color="#1E1E1E"),
         xaxis=dict(
             range=[-1, 8],
             showgrid=False,
@@ -982,8 +984,8 @@ def responsehist(result, datemonth):
     fig.update_yaxes(
         showgrid=False
     )
-    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Count', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"))
+    fig.update_layout(plot_bgcolor="#f8f9fa", yaxis_title_text='Count', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#f8f9fa", font=dict(color="#1E1E1E"))
     return fig
 
 
@@ -996,8 +998,8 @@ def responsetimebymonth(result, datemonth):
     fig.update_yaxes(
         showgrid=False
     )
-    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"), xaxis=dict(
+    fig.update_layout(plot_bgcolor="#f8f9fa", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#f8f9fa", font=dict(color="#1E1E1E"), xaxis=dict(
             range=[0, 13],
             showgrid=True,
             tickvals=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -1019,8 +1021,8 @@ def responsetimebytod(result, datemonth):
     fig.update_yaxes(
         showgrid=False
     )
-    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"), xaxis=dict(
+    fig.update_layout(plot_bgcolor="#f8f9fa", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#f8f9fa", font=dict(color="#1E1E1E"), xaxis=dict(
             range=[-1, 25],
             showgrid=True,
             tickvals=[x for x in range(0, 24)],
@@ -1041,8 +1043,8 @@ def responsetimebyweekday(result, datemonth):
     fig.update_yaxes(
         showgrid=False
     )
-    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"), xaxis=dict(
+    fig.update_layout(plot_bgcolor="#f8f9fa", yaxis_title_text='Response time (min)', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#f8f9fa", font=dict(color="#1E1E1E"), xaxis=dict(
             range=[-1, 8],
             showgrid=True,
             tickvals=[0, 1, 2, 3, 4, 5, 6],
@@ -1075,10 +1077,10 @@ def monthhist(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
+        plot_bgcolor="#f8f9fa",
+        paper_bgcolor="#f8f9fa",
         dragmode="select",
-        font=dict(color="white"),
+        font=dict(color="#1E1E1E"),
         xaxis=dict(
             range=[0, 13],
             showgrid=False,
@@ -1198,10 +1200,11 @@ def incidentsfeature(df_merged, feature):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=10, b=10),
         showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
+        plot_bgcolor="#f8f9fa",
+        paper_bgcolor="#f8f9fa",
         dragmode="select",
-        font=dict(color="white"),
+        font=dict(color="#1E1E1E"),
+        font_color="#1E1E1E",
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
@@ -1241,8 +1244,8 @@ def incidentsfeature(df_merged, feature):
     #     xaxis_title_text='Categories of '+feature,
     #     margin=go.layout.Margin(l=10, r=0, t=10, b=10),
     #     showlegend=False,
-    #     plot_bgcolor="#31302F",
-    #     paper_bgcolor="#31302F",
+    #     plot_bgcolor="#f8f9fa",
+    #     paper_bgcolor="#f8f9fa",
     #     dragmode="select",
     #     font=dict(color="white"),
     #     yaxis=dict(
@@ -1280,10 +1283,11 @@ def incidentsfeaturecombo(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=10, b=10),
         showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
+        plot_bgcolor="#f8f9fa",
+        paper_bgcolor="#f8f9fa",
         dragmode="select",
-        font=dict(color="white"),
+        font=dict(color="#1E1E1E"),
+        
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
@@ -1322,8 +1326,8 @@ def incidentsfeaturecombo(result, datemonth):
         # barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
-        plot_bgcolor="#31302F",
-        paper_bgcolor="#31302F",
+        plot_bgcolor="#f8f9fa",
+        paper_bgcolor="#f8f9fa",
         dragmode="select",
         font=dict(color="white"),
         yaxis=dict(
@@ -1357,8 +1361,8 @@ def totals(result, datemonth):
     fig.update_yaxes(
         showgrid=False
     )
-    fig.update_layout(plot_bgcolor="#31302F", yaxis_title_text='Count', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#31302F", font=dict(color="white"))
+    fig.update_layout(plot_bgcolor="#f8f9fa", yaxis_title_text='Count', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#f8f9fa", font=dict(color="#1E1E1E"))
     # xVal = result['month-year']
     # yVal = result['count']
     # fig.update_layout
@@ -1368,8 +1372,8 @@ def totals(result, datemonth):
     #     barmode="group",
     #     margin=go.layout.Margin(l=10, r=0, t=0, b=30),
     #     showlegend=False,
-    #     plot_bgcolor="#31302F",
-    #     paper_bgcolor="#31302F",
+    #     plot_bgcolor="#f8f9fa",
+    #     paper_bgcolor="#f8f9fa",
     #     dragmode="select",
     #     font=dict(color="white"),
     #     yaxis=dict(

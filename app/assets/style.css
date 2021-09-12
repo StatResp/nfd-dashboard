@@ -4,8 +4,8 @@
 
 /* Main Layout ––––––––––––––––––––––––––––––––––––––––––––––––––*/
 body {
-  background-color: #1E1E1E;
-  color: #d8d8d8;
+  background-color: #ffffff;
+  color: #080808!important;
   margin: 0;
   padding: 0;
 }
@@ -26,7 +26,7 @@ a {
   text-decoration: none;
 }
 .bg-grey{
-  background-color: #31302F;
+  background-color: #f0eeec;
 }
 .text-padding{
   padding: 5px;
@@ -65,7 +65,7 @@ a {
   height : 40px;
   margin-top : 40px;
   background-color: white;
-  color:black;
+  color:rgb(12, 12, 12);
   height:auto;
   text-align: center;
 }
@@ -91,8 +91,8 @@ a {
   margin-left: 8px;
 }
 .Select-control, .Select-menu-outer, .Select-multi-value-wrapper, .select-up, .is-open .Select-control {
-  background-color: #1E1E1E;
-  color: white;
+  background-color: #ebe7e7;
+  color: rgb(5, 5, 5);
   
 }
 
@@ -107,7 +107,7 @@ a {
 }
 
 .has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label {
-  color: white;
+  color: rgb(3, 3, 3);
 }
 ._dash-app-content {
   overflow-x: hidden;
@@ -115,17 +115,17 @@ a {
   position: relative;
 }
 .has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label{
-  color: #d8d8d8;
+  color: #090909;
   font-weight: 400;
   font-size: 14px;
 }
 
 
 #date {
-  background-color: #1e1e1e;
+  background-color: #ebe7e7;
   font-family: "Open Sans";
   font-weight: 400;
-  color: #dbdbdb;
+  color: #0a0a0a;
   border: 0.5px solid #dbdbdb44;
 }
 
@@ -149,6 +149,7 @@ a {
 }
 .SingleDatePickerInput__withBorder{
   border:none;
+  background-color: #f3f0f0; 
 }
 
 /*.DateInput.DateInput_1 {
@@ -158,22 +159,22 @@ a {
 .SingleDatePickerInput__withBorder {
   border-radius: 3px;
   color: #dbdbdb;
+  background-color: #f3f0f0; 
   /* background: #1e1e1e;
   background-color: #1e1e1e; */
 }
 .SingleDatePickerInput.SingleDatePickerInput_1.SingleDatePickerInput__withBorder.SingleDatePickerInput__withBorder_2 {
   border: 0.0px solid #dbdbdb;
   display: block;
+  background-color: #f3f0f0; 
 }
 .SingleDatePicker_1 {
   border: 0.0px solid #dbdbdb;
   display: block;
+  background-color: #f3f0f0; 
 }
 
-.SingleDatePicker_picker, .SingleDatePicker_picker_1, .SingleDatePicker_picker__directionLeft,
-.SingleDatePicker_picker__directionLeft_2{
-  filter:invert(100%);
-}
+
 
 /* For Mobile Phones and small screens ––––––––––––––––––––––––––––––––––––––––––––––––––*/
 @media only screen and (max-width: 900px) {

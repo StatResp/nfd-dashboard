@@ -149,7 +149,7 @@ Taken from https://codepen.io/chriddyp/pen/bWLwgP.css
     line-height: 1.6;
     font-weight: 400;
     font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: rgb(50, 50, 50);
+    color: rgb(5, 5, 5);
   }
   /* Typography –––––––––––––––––––––––––––––––––––––––––––––––––– */
   h1, h2, h3, h4, h5, h6 {
@@ -203,7 +203,7 @@ Taken from https://codepen.io/chriddyp/pen/bWLwgP.css
   }
   /* Blockquotes –––––––––––––––––––––––––––––––––––––––––––––––––– */
   blockquote {
-    border-left: 4px lightgrey solid;
+    border-left: 4px rgb(12, 12, 12) solid;
     padding-left: 1rem;
     margin-top: 2rem;
     margin-bottom: 2rem;
@@ -244,7 +244,7 @@ Taken from https://codepen.io/chriddyp/pen/bWLwgP.css
     outline: 0;
   }
   .button.button-primary, button.button-primary, input[type="submit"].button-primary, input[type="reset"].button-primary, input[type="button"].button-primary {
-    color: #FFF;
+    color: rgb(7, 7, 7);
     background-color: #33C3F0;
     border-color: #33C3F0;
   }
