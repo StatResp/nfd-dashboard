@@ -376,8 +376,8 @@ app.layout = html.Div(className="container-fluid bg-white text-dark", children=[
             ],
         ), ],
 ),
-    html.Div(className="row", children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
-                                                     '''Funding by TDOT and National Science Foundation.''', id='footer', className="col"), ]),
+    html.Div(className="row p-0 m-0 bg-white text-dark", children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
+                                                     '''Funding by TDOT and National Science Foundation.''', id='footer', className="col p-0 m-0"), ]),
 ]
 )
 
