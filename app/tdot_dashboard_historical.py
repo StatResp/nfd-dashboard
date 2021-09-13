@@ -44,11 +44,11 @@ pd.set_option('display.max_columns', None)
 
 latInitial = 36.16228
 lonInitial = -86.774372
-metadata={}                     
-#metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
-metadata['merged_pickle_address']='data/tdot/merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
-metadata['incident_pickle_address']='data/tdot/incident'
-metadata['pred_name_TF']='incident_occurred'
+metadata = {}
+# metadata['merged_pickle_address']='data/merged/TDOT_merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
+metadata['merged_pickle_address'] = 'data/tdot/merged_4h_2017-04-01_to_2021-06-01_top20percent_segments_grouped_nona'
+metadata['incident_pickle_address'] = 'data/tdot/incident'
+metadata['pred_name_TF'] = 'incident_occurred'
 
 # available_features = ['is_weekend', 'window',
 #                       'speed_mean', 'average_speed_mean', 'reference_speed_mean', 'congestion_mean', 'miles', 'lanes',
@@ -61,7 +61,8 @@ available_features = ['is_weekend', 'window',
                       'isf_length', 'slope_median', 'ends_ele_diff', 'temp_mean', 'wind_spd_mean', 'vis_mean', 'precip_mean',
                       'mean_incidents_last_7_days', 'mean_incidents_last_4_weeks', 'mean_incidents_over_all_windows',
                       ]
-df_merged = pd.read_parquet(metadata['merged_pickle_address'], columns=available_features+['time_local','county','month','incident_occurred'])
+df_merged = pd.read_parquet(metadata['merged_pickle_address'], columns=available_features+[
+                            'time_local', 'county', 'month', 'incident_occurred'])
 
 if not 'day_of_week' in df_merged.columns:
     df_merged['day_of_week'] = df_merged['time_local'].dt.dayofweek
@@ -110,12 +111,12 @@ px.set_mapbox_access_token(mapbox_access_token)
 
 # a non CPU-bound task
 # time.sleep(3)
-#print(getrusage(RUSAGE_SELF))
+# print(getrusage(RUSAGE_SELF))
 
 
 # setup the app frameworks and main layout
 # Layout of Dash App
-app.layout = html.Div(className="container-fluid bg-light text-white", children=[html.Div(
+app.layout = html.Div(className="container-fluid bg-white text-dark", children=[html.Div(
     children=[
         html.Div(
             className="row",
@@ -125,17 +126,17 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                     className="col-12 col-lg-3",
                     children=[
                         dcc.Markdown(
-                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''',className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
-                        html.Div(
-                            className="card p-0 m-0 bg-light", style={"border": "none"},
-                            children=[
-                                dcc.Markdown(
-                                    '''Configure the options below for filtering the data.''',className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
-                            ],
-                        ),
-                        html.Div(className="card p-1 m-1 bg-light", children=[
+                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''', className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
+                        # html.Div(
+                        #     className="card p-0 m-0 bg-white", style={"border": "none"},
+                        #     children=[
+                        #         dcc.Markdown(
+                        #             '''Configure the options below for filtering the data.''',className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
+                        #     ],
+                        # ),
+                        html.Div(className="card p-1 m-1 bg-white", children=[
                             dcc.Markdown(
-                                '''  # Start Date''', className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
+                                '''  # Start Date''', style={"margin": "0", "padding": "0"}),
                             dcc.DatePickerSingle(
                                 id="date-picker",
                                 min_date_allowed=startdate,
@@ -148,7 +149,7 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                         ),
 
                         html.Div(
-                            className="card p-1 m-1 bg-light text-dark",
+                            className="card p-1 m-1 bg-white text-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## End Date''', style={"margin": "0", "padding": "0"}),
@@ -165,7 +166,7 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                         ),
 
                         html.Div(
-                            className="card p-1 m-1 bg-light text-dark",
+                            className="card p-1 m-1 bg-white text-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## County'''),
@@ -180,7 +181,7 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                         ),
 
                         html.Div(
-                            className="card p-1 m-1 bg-light", style={"display": "none"},
+                            className="card p-1 m-1 bg-white", style={"display": "none"},
                             children=[
                                 dcc.Markdown(
                                     '''## Cluster'''),
@@ -195,7 +196,7 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                         ),
                         # Change to side-by-side for mobile layout
                         html.Div(
-                            className="card p-1 m-1 btn-group bg-light text-dark",
+                            className="card p-1 m-1 btn-group bg-white text-dark",
                             children=[
                                 dcc.Markdown('''## Month'''),
                                 # Dropdown to select times
@@ -225,7 +226,7 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                             ],
                         ),
                         html.Div(
-                            className="card p-1 m-1 bg-light text-dark",
+                            className="card p-1 m-1 bg-white text-dark",
                             children=[
                                 dcc.Markdown(
                                     '''## Days of Week '''),
@@ -248,7 +249,7 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                         ),
 
                         html.Div(id="feature-selector",
-                                 className="card p-1 m-1 bg-light text-dark",
+                                 className="card p-1 m-1 bg-white text-dark",
                                  children=[
                                      dcc.Markdown(
                                          '''## Select Feature for Likelihood Analysis'''),
@@ -284,7 +285,8 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                                      ),
                                  ],
                                  ),
-                        html.Div(className="card p-1 m-1 bg-light text-dark",
+
+                        html.Div(className="card p-1 m-1 bg-white text-dark",
                                  children=[
                                      dcc.Markdown(
                                          '''## Incident Time'''),
@@ -302,10 +304,10 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                                  ]
                                  ),
 
-                        html.Div(className="card p-1 m-1 bg-light text-dark",
+                        html.Div(className="card p-1 m-1 bg-white text-dark",
                                  children=[
                                      dcc.Markdown(
-                                         '''Adjust Slider below to configure the heatmap intensity.'''),
+                                         '''## Heatmap density radius.'''),
                                      dcc.Slider(
                                          id='map-graph-radius',
                                          min=1,
@@ -318,8 +320,10 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                                  ]
                                  ),
 
-                        html.Div(className="card p-1 m-1 bg-light text-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                                                                             html.P(
+
+
+                        html.Div(className="card p-1 m-1 bg-white text-dark", children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                                                                                        html.P(
                             'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                             html.P(
                             'Time', id='time-text', style={'text-align': 'left', 'font-weight': 'bold'}),
@@ -333,32 +337,32 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
                 html.Div(
                     className="col-12 col-lg-9 p-0 m-0 container-fluid",
                     children=[
-                        html.Div(className="p-0 m-0 card  bg-light text-dark",
+                        html.Div(className="p-0 m-0 card  bg-white text-dark",
                                  children=[
                                      dbc.Tabs(id='tabs', active_tab="incidents", children=[
-                                         dbc.Tab(label='Incidents Total', tab_id='incidents', className="bg-light text-white", children=[dcc.Loading(
+                                         dbc.Tab(label='Incidents Total', tab_id='incidents', className="bg-white text-white", children=[dcc.Loading(
                                              id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
-                                         dbc.Tab(label='Incidents by Month', tab_id='incidents-month', className="bg-light text-white", children=[dcc.Loading(
+                                         dbc.Tab(label='Incidents by Month', tab_id='incidents-month', className="bg-white text-white", children=[dcc.Loading(
                                              id="loading-icon-incidents-month", children=[dcc.Graph(id="map-incidents-month"), ], type='default')]),
 
                                      ]
                                      ),
                                  ]),
 
-                        html.Div(className="p-0 m-0 card bg-light text-dark", children=[
+                        html.Div(className="p-0 m-0 card bg-white text-dark", children=[
                             dbc.Tabs(id='histogram-basis', active_tab="month", children=[
                                  dbc.Tab(label='Incident Frequency',
-                                         tab_id='totals', className="bg-light text-white"),
+                                         tab_id='totals', className="bg-white text-white"),
                                  dbc.Tab(label='Incidents by Month',
-                                         tab_id='month', className="bg-light text-white"),
+                                         tab_id='month', className="bg-white text-white"),
                                  dbc.Tab(label='Incidents by Weekday',
-                                         tab_id='day', className="bg-light text-white"),
+                                         tab_id='day', className="bg-white text-white"),
                                  dbc.Tab(label='Incidents by Time of Day',
-                                         tab_id='hour', className="bg-light text-white"),
+                                         tab_id='hour', className="bg-white text-white"),
                                  dbc.Tab(label='Comparitive Likelihood',
-                                         tab_id='incidentsfeaturecombo', className="bg-light text-white"),
+                                         tab_id='incidentsfeaturecombo', className="bg-white text-white"),
                                  dbc.Tab(label='Comparitive Likelihood by Feature',
-                                         tab_id='incidentsfeature', className="bg-light text-white"),
+                                         tab_id='incidentsfeature', className="bg-white text-white"),
 
                                  ]),
                             dcc.Loading(id="loading-icon2", className="flex-grow-1",
@@ -372,8 +376,7 @@ app.layout = html.Div(className="container-fluid bg-light text-white", children=
             ],
         ), ],
 ),
-    html.Div(className="row", children=[dcc.Markdown(""),
-                                        dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
+    html.Div(className="row", children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
                                                      '''Funding by TDOT and National Science Foundation.''', id='footer', className="col"), ]),
 ]
 )
@@ -893,7 +896,7 @@ def hourhist(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                 text=(str((yi))) if yi!=0 else "",
+                text=(str((yi))) if yi != 0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -954,7 +957,7 @@ def dayhist(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                text=(str((yi))) if yi!=0 else "",
+                text=(str((yi))) if yi != 0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -1102,7 +1105,7 @@ def monthhist(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                text=(str((yi))) if yi!=0 else "",
+                text=(str((yi))) if yi != 0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -1217,7 +1220,7 @@ def incidentsfeature(df_merged, feature):
             dict(
                 x=xi,
                 y=yi,
-                text=(str("{:.3f}".format(yi))) if yi!=0 else "",
+                text=(str("{:.3f}".format(yi))) if yi != 0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,
@@ -1287,7 +1290,7 @@ def incidentsfeaturecombo(result, datemonth):
         paper_bgcolor="#f8f9fa",
         dragmode="select",
         font=dict(color="#1E1E1E"),
-        
+
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
@@ -1300,7 +1303,7 @@ def incidentsfeaturecombo(result, datemonth):
             dict(
                 x=xi,
                 y=yi,
-                text=(str("{:.3f}".format(yi))) if yi!=0 else "",
+                text=(str("{:.3f}".format(yi))) if yi != 0 else "",
                 xanchor="center",
                 yanchor="top",
                 showarrow=False,

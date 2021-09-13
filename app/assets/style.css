@@ -54,9 +54,9 @@ a {
 #histogram {
   flex-grow: 1
 }
-#map-graph {
+/* #map-graph {
   flex-grow: 1
-}
+} */
 #footer {  
   width:100%;
   padding: 0;
@@ -81,10 +81,10 @@ a {
   padding-top: 8px;
   padding-bottom: 0px;
 }
-.div-for-slider {
+/* .div-for-slider {
   width: 97%;
   text-align: center;
-}
+} */
 .logo {
   height: 35px;
   padding-bottom: 12px;
