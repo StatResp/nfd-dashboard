@@ -110,34 +110,35 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                 html.Div(
                     className="col-12 col-lg-3",
                     children=[
-                        dbc.Row(id='initial-div',form=True,no_gutters=True,
-                                 className="p-0 m-0 bg-white", style={"border": "none"},                                 
-                                 children=[
-                                     dbc.Col(
-                                         dcc.Markdown(
-                                             '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''', 
-                                             className="p-0 m-0", style={"margin": "0", "padding": "0"}),
-                                         width=10,
-                                     ),
-                                     dbc.Row(form=True,no_gutters=True,children=[
-                                     dbc.Col(
-                                         html.I(id='sun', className='fas fa-sun p-0 m-0',style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},                                        
-                                     ),
-                                     dbc.Col(daq.BooleanSwitch(
-                                         id='theme-toggle',
-                                         persistence=True,
-                                         color='blue',
-                                         className="p-0 m-0",
-                                         style={"margin": "0", "padding": "0"}                                         
-                                     ), 
-                                     ),
-                                     dbc.Col(
-                                         html.I(id='moon', className='fas fa-moon p-0 m-0',style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
-            
-                                     )]
-                                     )
-                                 ],
-                                 ),
+                        dbc.Row(id='initial-div', form=True, no_gutters=True,
+                                className="p-0 m-0 bg-white", style={"border": "none"},
+                                children=[
+                                    dbc.Col(
+                                        dcc.Markdown(
+                                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''',
+                                            className="p-0 m-0", style={"margin": "0", "padding": "0"}),
+                                        width=10,
+                                    ),
+                                    dbc.Row(form=True, no_gutters=True, children=[
+                                        dbc.Col(
+                                            html.I(id='sun', className='fas fa-sun p-0 m-0', style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
+                                        ),
+                                        dbc.Col(daq.BooleanSwitch(
+                                            id='theme-toggle',
+                                            persistence=True,
+                                            color='blue',
+                                            className="p-0 m-0",
+                                            style={"margin": "0",
+                                                   "padding": "0"}
+                                        ),
+                                        ),
+                                        dbc.Col(
+                                            html.I(id='moon', className='fas fa-moon p-0 m-0', style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
+
+                                        )]
+                                    )
+                                ],
+                                ),
                         html.Div(id='start-date-div', className="card p-1 m-1 bg-white text-dark", children=[
                             dcc.Markdown(
                                 '''  # Start Date''', style={"margin": "0", "padding": "0"}),
@@ -528,7 +529,6 @@ def return_merged(start_date, end_date, counties, months, timerange, days):
     [Input("theme-toggle", "on")]
 )
 def update_theme(dark_theme):
-    print(dark_theme)
     if dark_theme:
         return "container-fluid bg-dark text-white",\
             "p-0 m-0 bg-dark row",\
@@ -585,33 +585,6 @@ def update_incidents(start_date, end_date, counties, datemonth, timerange,   day
     return "Incidents: %d" % (len(result)), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
 
 
-def return_empty_fig():
-    return {
-        "layout": {
-            "xaxis": {
-                "visible": False
-            },
-            "plot_bgcolor": "#f8f9fa",
-            "paper_bgcolor": "#f8f9fa",
-            "yaxis": {
-                "visible": False
-            },
-            "annotations": [
-                {
-                    "text": "No matching data found",
-                    "xref": "paper",
-                    "yref": "paper",
-                    "showarrow": False,
-                    "font": {
-                        "size": 28,
-                        "color": "white"
-                    }
-                }
-            ]
-        }
-    }
-
-
 @cache.memoize()
 @app.callback(
     Output('map-graph', 'figure'),
@@ -620,11 +593,11 @@ def return_empty_fig():
      Input("map-graph-radius", "value"),
      Input('county', 'value'),
      Input("month-selector", "value"),
-     Input("time-slider", "value"),   Input("day-selector", "value")]
+     Input("time-slider", "value"),   Input("day-selector", "value"), Input("theme-toggle", "on"), ]
 )
-def update_map_graph(start_date, end_date, radius, counties, datemonth, timerange,   days):
+def update_map_graph(start_date, end_date, radius, counties, datemonth, timerange,   days, darktheme):
     result = return_incidents(
-        start_date, end_date, counties, datemonth, timerange,   days)
+        start_date, end_date, counties, datemonth, timerange, days)
 
     if len(result) == 0:
         return {
@@ -676,7 +649,7 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
         mapbox=dict(
             accesstoken=mapbox_access_token,
             center=dict(lat=latone, lon=lonone),
-            style=mapbox_style,
+            style="dark" if darktheme else "light",
             bearing=0,
             zoom=zoomvalue,
         ),
@@ -691,7 +664,7 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
                                     "mapbox.center.lon": lonone,
                                     "mapbox.center.lat": latone,
                                     "mapbox.bearing": 0,
-                                    "mapbox.style": mapbox_style,
+                                    "mapbox.style": "dark" if darktheme else "light",
                                 }
                             ],
                             label="Reset Zoom",
@@ -707,10 +680,10 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
                 y=0.02,
                 xanchor="left",
                 yanchor="bottom",
-                bgcolor="#f8f9fa",
+                bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
                 borderwidth=1,
                 bordercolor="#6d6d6d",
-                font=dict(color="#1E1E1E"),
+                font=dict(color="white" if darktheme else "#1E1E1E"),
             ),
         ],
     )
@@ -725,9 +698,9 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
      Input("map-graph-radius", "value"),
      Input('county', 'value'),
      Input("month-selector", "value"),
-     Input("time-slider", "value"), Input("day-selector", "value")]
+     Input("time-slider", "value"), Input("day-selector", "value"), Input("theme-toggle", "on"), ]
 )
-def update_map_incidents_month(start_date, end_date, radius, counties, datemonth, timerange,   days):
+def update_map_incidents_month(start_date, end_date, radius, counties, datemonth, timerange,   days, darktheme):
 
     result = return_incidents(
         start_date, end_date, counties, datemonth, timerange,   days)
@@ -782,7 +755,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                       mapbox=dict(
                           accesstoken=mapbox_access_token,
                           center=dict(lat=latone, lon=lonone),
-                          style=mapbox_style,
+                          style="dark" if darktheme else "light",
                           bearing=0,
                           zoom=zoomvalue,
                       ),
@@ -797,7 +770,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                                                   "mapbox.center.lon": lonone,
                                                   "mapbox.center.lat": latone,
                                                   "mapbox.bearing": 0,
-                                                  "mapbox.style": mapbox_style,
+                                                  "mapbox.style": "dark" if darktheme else "light",
                                               }
                                           ],
                                           label="Reset Zoom",
@@ -816,16 +789,17 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                               y=0.02,
                               xanchor="left",
                               yanchor="top",
-                              bgcolor="#f8f9fa",
+                              bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
                               borderwidth=1,
                               bordercolor="#6d6d6d",
-                              font=dict(color="#1E1E1E"),
+                              font=dict(
+                                  color="white" if darktheme else "#1E1E1E"),
                           ),
                       ],
                       )
     fig['layout']['updatemenus'][0]['pad'] = dict(r=0, t=0)
     fig['layout']['sliders'][0]['pad'] = dict(r=0, t=0, b=0, l=0)
-    fig['layout']['sliders'][0]['bgcolor'] = "#f8f9fa"
+    fig['layout']['sliders'][0]['bgcolor'] = "white" if darktheme else "#f8f9fa"
     fig["layout"].pop("sliders")
     fig["layout"]["updatemenus"] = [
         {
@@ -837,7 +811,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                             "mapbox.center.lon": lonone,
                             "mapbox.center.lat": latone,
                             "mapbox.bearing": 0,
-                            "mapbox.style": mapbox_style,
+                            "mapbox.style": "dark" if darktheme else "light",
                         }
                     ],
                     "label": "Reset Zoom",
@@ -866,17 +840,17 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
             "xanchor": "left",
             "y": 0.02,
             "yanchor": "bottom",
-            "bgcolor": "#f8f9fa",
+            "bgcolor":  "#1E1E1E" if darktheme else "#f8f9fa",
             "borderwidth": 1,
             "bordercolor": "#6d6d6d",
-            "font": {"color": "#1E1E1E"}
+            "font": {"color": "white" if darktheme else "#1E1E1E"}
         }
     ]
     for k in range(len(fig.frames)):
         fig.frames[k]['layout'].update(title_text=f'<b>{monthlist[k]}</b>')
         fig.frames[k]['layout'].update(title_x=0.1)
         fig.frames[k]['layout'].update(
-            title_font=dict(family='Arial Black', size=18))
+            title_font=dict(family='Arial Black', size=18, color="white" if darktheme else "#1E1E1E"))
         fig.frames[k]['layout'].update(title_y=0.92)
         fig.frames[k]['layout'].update(title_yanchor="bottom")
         fig.frames[k]['layout'].update(title_xanchor="left")
@@ -884,7 +858,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
 
 
 @cache.memoize()
-def hourhist(result, datemonth):
+def hourhist(result, datemonth, darktheme):
     result['hour'] = result['time_local'].dt.hour
     result = result.groupby(['hour']).count().reset_index()
     result['count'] = result['incidentNumber']
@@ -899,12 +873,12 @@ def hourhist(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
-        plot_bgcolor="#f8f9fa",
-        paper_bgcolor="#f8f9fa",
-        title_font_color="#1E1E1E",
+        plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+        paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+        title_font_color="white" if darktheme else "#1E1E1E",
         dragmode="select",
-        font_color="#1E1E1E",
-        font=dict(color="#1E1E1E"),
+        font_color="white" if darktheme else "#1E1E1E",
+        font=dict(color="white" if darktheme else "#1E1E1E"),
         xaxis=dict(
             range=[-1, 25],
             showgrid=False,
@@ -946,7 +920,7 @@ def hourhist(result, datemonth):
 
 
 @cache.memoize()
-def dayhist(result, datemonth):
+def dayhist(result, datemonth, darktheme):
     result = result.groupby(['day_of_week']).count().reset_index()
     result['count'] = result['incidentNumber']
     colorVal = ["#2202d1"]*25
@@ -959,10 +933,10 @@ def dayhist(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
-        plot_bgcolor="#f8f9fa",
-        paper_bgcolor="#f8f9fa",
+        plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+        paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
         dragmode="select",
-        font=dict(color="#1E1E1E"),
+        font=dict(color="white" if darktheme else "#1E1E1E"),
         xaxis=dict(
             range=[-1, 8],
             showgrid=False,
@@ -1003,23 +977,7 @@ def dayhist(result, datemonth):
 
 
 @cache.memoize()
-def responsehist(result, datemonth):
-
-    fig = px.histogram(result, x="responsetime",   labels={
-                       'responsetime': 'Response Time (min)', 'y': 'Count'},  opacity=0.8, marginal="rug")
-    fig.update_xaxes(
-        showgrid=True
-    )
-    fig.update_yaxes(
-        showgrid=False
-    )
-    fig.update_layout(plot_bgcolor="#f8f9fa", yaxis_title_text='Count', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#f8f9fa", font=dict(color="#1E1E1E"))
-    return fig
-
-
-@cache.memoize()
-def monthhist(result, datemonth):
+def monthhist(result, datemonth, darktheme):
     colorVal = ["#2202d1"]*25
     result = result.groupby(['month']).count().reset_index()
     result['count'] = result['incidentNumber']
@@ -1038,10 +996,10 @@ def monthhist(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=0, b=30),
         showlegend=False,
-        plot_bgcolor="#f8f9fa",
-        paper_bgcolor="#f8f9fa",
+        plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+        paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
         dragmode="select",
-        font=dict(color="#1E1E1E"),
+        font=dict(color="white" if darktheme else "#1E1E1E"),
         xaxis=dict(
             range=[0, 13],
             showgrid=False,
@@ -1083,7 +1041,7 @@ def monthhist(result, datemonth):
 
 
 @cache.memoize()
-def incidentsfeature(df_merged, feature):
+def incidentsfeature(df_merged, feature, darktheme):
     colorVal = ["#2202d1"]*25
     feature_cat = feature+'_cat_'
     df_merged_ = categorize_numerical_features(
@@ -1137,11 +1095,10 @@ def incidentsfeature(df_merged, feature):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=10, b=10),
         showlegend=False,
-        plot_bgcolor="#f8f9fa",
-        paper_bgcolor="#f8f9fa",
+        plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+        paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
         dragmode="select",
-        font=dict(color="#1E1E1E"),
-        font_color="#1E1E1E",
+        font=dict(color="white" if darktheme else "#1E1E1E"),
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
             showticklabels=False,
@@ -1174,7 +1131,7 @@ def incidentsfeature(df_merged, feature):
 
 
 @cache.memoize()
-def incidentsfeaturecombo(result, datemonth):
+def incidentsfeaturecombo(result, datemonth, darktheme):
     colorVal = ["#2202d1"]*25
     All_Possible_Dic, All_Possible_Filters = Filter_Combo_Builder()
     result = categorize_numerical_features(
@@ -1194,10 +1151,10 @@ def incidentsfeaturecombo(result, datemonth):
         barmode="group",
         margin=go.layout.Margin(l=10, r=0, t=10, b=10),
         showlegend=False,
-        plot_bgcolor="#f8f9fa",
-        paper_bgcolor="#f8f9fa",
+        plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+        paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
         dragmode="select",
-        font=dict(color="#1E1E1E"),
+        font=dict(color="white" if darktheme else "#1E1E1E"),
 
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
@@ -1229,32 +1186,9 @@ def incidentsfeaturecombo(result, datemonth):
         layout=layout,
     )
 
-    fig = px.bar(result, x='Tag', y='Comparitive Likelihood')
-    layout = go.Layout(
-        bargap=0.05,
-        autosize=True,
-        bargroupgap=0,
-        # barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=30),
-        showlegend=False,
-        plot_bgcolor="#f8f9fa",
-        paper_bgcolor="#f8f9fa",
-        dragmode="select",
-        font=dict(color="white"),
-        yaxis=dict(
-            showticklabels=True,
-            showgrid=True,
-            fixedrange=True,
-            rangemode="nonnegative",
-            zeroline=False,
-        ),
-    )
-    fig.update_layout(layout)
-    return fig
-
 
 @cache.memoize()
-def totals(result, datemonth):
+def incidenttotals(result, datemonth, darktheme):
     resultgroup = result.groupby(
         'month-year').agg({'incidentNumber': 'count', 'time_local': 'first'})
     resultgroup = resultgroup.reset_index()
@@ -1267,8 +1201,8 @@ def totals(result, datemonth):
     fig.update_yaxes(
         showgrid=False
     )
-    fig.update_layout(plot_bgcolor="#f8f9fa", yaxis_title_text='Count', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#f8f9fa", font=dict(color="#1E1E1E"))
+    fig.update_layout(plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa", yaxis_title_text='Count', margin=go.layout.Margin(
+        l=10, r=0, t=0, b=30), paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa", font=dict(color="white" if darktheme else "#1E1E1E"))
 
     return fig
 
@@ -1282,9 +1216,10 @@ def totals(result, datemonth):
      Input('county', 'value'), Input("month-selector", "value"), Input("histogram-basis",
                                                                        "active_tab"), Input("time-slider", "value"),  Input("day-selector", "value"),
      Input('feature', 'value'),
+     Input("theme-toggle", "on"),
      ]
 )
-def update_bar_chart(start_date, end_date, counties, datemonth, histogramkind, timerange,   days, feature):
+def update_bar_chart(start_date, end_date, counties, datemonth, histogramkind, timerange,   days, feature, darktheme):
 
     if histogramkind == "incidentsfeature" or histogramkind == "incidentsfeaturecombo":
         result = return_merged(start_date, end_date,
@@ -1294,17 +1229,17 @@ def update_bar_chart(start_date, end_date, counties, datemonth, histogramkind, t
             start_date, end_date, counties, datemonth, timerange,   days)
 
     if histogramkind == "month":
-        return monthhist(result, datemonth)
+        return monthhist(result, datemonth, darktheme)
     elif histogramkind == "totals":
-        return totals(result, datemonth)
+        return incidenttotals(result, datemonth, darktheme)
     elif histogramkind == "day":
-        return dayhist(result, datemonth)
+        return dayhist(result, datemonth, darktheme)
     elif histogramkind == "hour":
-        return hourhist(result, datemonth)
+        return hourhist(result, datemonth, darktheme)
     elif histogramkind == "incidentsfeature":
-        return incidentsfeature(result, feature)
+        return incidentsfeature(result, feature, darktheme)
     elif histogramkind == "incidentsfeaturecombo":
-        return incidentsfeaturecombo(result, datemonth)
+        return incidentsfeaturecombo(result, datemonth, darktheme)
 
 
 # %%
