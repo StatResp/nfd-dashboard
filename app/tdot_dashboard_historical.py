@@ -390,13 +390,14 @@ app.clientside_callback(
         {
            //stylesheets[0].href = "https://scopelab.ai/files/darkstyle.css""
            url="https://scopelab.ai/files/darkstyle.css"
-           setTimeout(function() {stylesheets[0].href = url;}, 100);
+           
         }
         else{
-            stylesheets[0].href = "https://scopelab.ai/files/lightstyle.css"
+           // stylesheets[0].href = "https://scopelab.ai/files/lightstyle.css"
             url="https://scopelab.ai/files/lightstyle.css"
-            setTimeout(function() {stylesheets[0].href = url;}, 100);
+           
         }
+        setTimeout(function() {stylesheets[0].href = url;}, 1000);
 
         // Delay update of the url of the buffer stylesheet.
       return stylesheets[0].href
