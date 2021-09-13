@@ -75,10 +75,22 @@ counties = counties.tolist()
 counties.sort()
 cluster_list = [1, 2]
 
+
+external_stylesheets = [
+    {
+        'href': 'https://use.fontawesome.com/releases/v5.8.1/css/all.css',
+        'rel': 'stylesheet',
+        'integrity': 'sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf',
+        'crossorigin': 'anonymous'
+    },
+    dbc.themes.BOOTSTRAP,
+    "https://scopelab.ai/files/lightstyle.css"
+]
+
 # set the server and global parameters
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
-app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=[dbc.themes.BOOTSTRAP, "https://scopelab.ai/files/lightstyle.css"], server=server, meta_tags=[
+app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=external_stylesheets, server=server, meta_tags=[
                 {"name": "viewport", "content": "width=device-width"}])
 app.title = 'Incident Dashboard'
 
@@ -98,16 +110,31 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                 html.Div(
                     className="col-12 col-lg-3",
                     children=[
-                        html.Div(id='initial-div',
-                                 className="p-0 m-0 bg-white row", style={"border": "none"},
+                        dbc.Row(id='initial-div',form=True,no_gutters=True,
+                                 className="p-0 m-0 bg-white", style={"border": "none"},                                 
                                  children=[
-                                     dcc.Markdown(
-                                         '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''', className="p-0 m-0 col-10", style={"margin": "0", "padding": "0"}),
-                                     daq.ToggleSwitch(
+                                     dbc.Col(
+                                         dcc.Markdown(
+                                             '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''', 
+                                             className="p-0 m-0", style={"margin": "0", "padding": "0"}),
+                                         width=10,
+                                     ),
+                                     dbc.Row(form=True,no_gutters=True,children=[
+                                     dbc.Col(
+                                         html.I(id='sun', className='fas fa-sun p-0 m-0',style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},                                        
+                                     ),
+                                     dbc.Col(daq.BooleanSwitch(
                                          id='theme-toggle',
                                          persistence=True,
                                          color='blue',
-                                         label='Dark Theme', labelPosition='bottom', className="p-0 m-0 col-2",
+                                         className="p-0 m-0",
+                                         style={"margin": "0", "padding": "0"}                                         
+                                     ), 
+                                     ),
+                                     dbc.Col(
+                                         html.I(id='moon', className='fas fa-moon p-0 m-0',style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
+            
+                                     )]
                                      )
                                  ],
                                  ),
@@ -369,19 +396,19 @@ app.clientside_callback(
             url="https://scopelab.ai/files/lightstyle.css"
             setTimeout(function() {stylesheets[0].href = url;}, 100);
         }
-        
+
         // Delay update of the url of the buffer stylesheet.
       return stylesheets[0].href
     }
     """,
     Output("blank", "children"),
-    Input("theme-toggle", "value"),
+    Input("theme-toggle", "on"),
 )
 
 # Incident Filterings
 
 
-@cache.memoize()
+@ cache.memoize()
 def return_incidents(start_date, end_date, counties, months, timerange,   days):
     start_date = dateparser.parse(start_date)
     end_date = dateparser.parse(end_date)
@@ -496,9 +523,9 @@ def return_merged(start_date, end_date, counties, months, timerange, days):
      Output('maps-tabs-div', "className"),
      Output('histogram-basis-div', "className"),
      Output('footer-div', "className"),
-      Output('footer', "className"),
+     Output('footer', "className"),
      ],
-    [Input("theme-toggle", "value")]
+    [Input("theme-toggle", "on")]
 )
 def update_theme(dark_theme):
     print(dark_theme)
@@ -520,7 +547,7 @@ def update_theme(dark_theme):
             "row p-0 m-0 bg-dark text-white",\
             "col p-0 m-0 bg-dark text-white"
     else:
-           return "container-fluid bg-white text-dark",\
+        return "container-fluid bg-white text-dark",\
             "p-0 m-0 bg-white row",\
             "card p-1 m-1 bg-white text-dark",\
             "card p-1 m-1 bg-white text-dark",\
