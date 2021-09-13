@@ -22,6 +22,7 @@ from plotly import graph_objs as go
 from plotly.graph_objs import *
 from datetime import datetime as dt
 from datetime import time as tt
+import dash_daq as daq
 # import dataextract
 import os
 import sys
@@ -94,7 +95,7 @@ cluster_list = [1, 2]
 # set the server and global parameters
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
-app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=[dbc.themes.BOOTSTRAP], server=server, meta_tags=[
+app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=[dbc.themes.BOOTSTRAP, "https://scopelab.ai/files/lightstyle.css"], server=server, meta_tags=[
                 {"name": "viewport", "content": "width=device-width"}])
 app.title = 'Incident Dashboard'
 
@@ -125,15 +126,19 @@ app.layout = html.Div(className="container-fluid bg-white text-dark", children=[
                 html.Div(
                     className="col-12 col-lg-3",
                     children=[
-                        dcc.Markdown(
-                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''', className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
-                        # html.Div(
-                        #     className="card p-0 m-0 bg-white", style={"border": "none"},
-                        #     children=[
-                        #         dcc.Markdown(
-                        #             '''Configure the options below for filtering the data.''',className="p-0 m-0 text-dark", style={"margin": "0", "padding": "0"}),
-                        #     ],
-                        # ),
+                        html.Div(
+                              className="p-0 m-0 bg-white row", style={"border": "none"},
+                            children=[
+                                dcc.Markdown(
+                                    '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''', className="p-0 m-0 text-dark col-10", style={"margin": "0", "padding": "0"}),
+                                daq.ToggleSwitch(
+                                    id='theme-toggle',
+                                    persistence=True,
+                                    color='blue',
+                                    label='Dark Theme', labelPosition='bottom', className="p-0 m-0 col-2",
+                                )
+                              ],
+                        ),
                         html.Div(className="card p-1 m-1 bg-white", children=[
                             dcc.Markdown(
                                 '''  # Start Date''', style={"margin": "0", "padding": "0"}),
@@ -376,13 +381,42 @@ app.layout = html.Div(className="container-fluid bg-white text-dark", children=[
             ],
         ), ],
 ),
-    html.Div(className="row p-0 m-0 bg-white text-dark", children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
-                                                     '''Funding by TDOT and National Science Foundation.''', id='footer', className="col p-0 m-0"), ]),
+    html.Div(id="blank", children=[dcc.Markdown(
+        '''dark theme''')],style={"display":"none"}),
+    html.Div(className="row p-0 m-0 bg-white text-dark",
+     children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
+     '''Funding by TDOT and National Science Foundation.''', id='footer', className="col p-0 m-0"), ]),
 ]
 )
 
+app.clientside_callback(
+    """
+    function(darktheme) {
+        var stylesheets = document.querySelectorAll('link[rel=stylesheet][href^="https://scopelab.ai"]')
+        // Update the url of the main stylesheet.
+        var url="https://scopelab.ai/files/darkstyle.css"
+        if(darktheme === true)
+        {
+           //stylesheets[0].href = "https://scopelab.ai/files/darkstyle.css""
+           url="https://scopelab.ai/files/darkstyle.css"
+           setTimeout(function() {stylesheets[0].href = url;}, 100);
+        }
+        else{
+            stylesheets[0].href = "https://scopelab.ai/files/lightstyle.css"
+            url="https://scopelab.ai/files/lightstyle.css"
+            setTimeout(function() {stylesheets[0].href = url;}, 100);
+        }
+        
+        // Delay update of the url of the buffer stylesheet.
+      return stylesheets[0].href
+    }
+    """,
+    Output("blank", "children"),
+    Input("theme-toggle", "value"),
+)
 
 # Incident Filterings
+
 
 @cache.memoize()
 def return_incidents(start_date, end_date, counties, months, timerange,   days):
