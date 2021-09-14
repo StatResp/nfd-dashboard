@@ -10,8 +10,8 @@ def Categorizer_Dic(df_: pd.DataFrame):
     Features=dict()
 
 
-    temp_min=0
-    temp_max=0
+    temp_min=-10
+    temp_max=30
     if 'temp_min' in df_.columns:
         temp_min = min(temp_min, df_['temp_min'].min())
         temp_max = max(temp_max, df_['temp_min'].max())
@@ -29,7 +29,7 @@ def Categorizer_Dic(df_: pd.DataFrame):
         Features['temp_max'] = {'bins': [temp_min,0,10,25,temp_max],'labels': ['Freezing','Cold','Mild','Hot']}
 
     wind_min = 0
-    wind_max = 0
+    wind_max = 10
     if 'wind_spd_min' in df_.columns:
         wind_min = min(wind_min, df_['wind_spd_min'].min())
         wind_max = max(wind_max, df_['wind_spd_min'].max())
@@ -47,7 +47,7 @@ def Categorizer_Dic(df_: pd.DataFrame):
         Features['wind_spd_max'] = { 'bins': [wind_min,3,7,wind_max],'labels': ['No_Wind','Mild','Windy']}
 
     vis_min = 0
-    vis_max = 0
+    vis_max = 5
     if 'vis_min' in df_.columns:
         vis_min = min(vis_min, df_['vis_min'].min())
         vis_max = max(vis_max, df_['vis_min'].max())
@@ -66,7 +66,7 @@ def Categorizer_Dic(df_: pd.DataFrame):
 
 
     precip_min = 0
-    precip_max = 0
+    precip_max = 2
     if 'precip_min' in df_.columns:
         precip_min = min(precip_min, df_['precip_min'].min())
         precip_max = max(precip_max, df_['precip_min'].max())
@@ -85,7 +85,7 @@ def Categorizer_Dic(df_: pd.DataFrame):
 
 
 
-    speed_max = 0
+    speed_max = 80
     if 'speed_min' in df_.columns:
         speed_max = max(speed_max, df_['speed_min'].max())
     if 'speed_mean' in df_.columns:
@@ -99,7 +99,7 @@ def Categorizer_Dic(df_: pd.DataFrame):
     if 'speed_max' in df_.columns:
         Features['speed_max'] = { 'bins': [0,20,40,60,speed_max],'labels': ['[0-20)','[20-40)', '[40-60)','[60-max]']}
 
-    reference_speed_max = 0
+    reference_speed_max = 80
     if 'reference_speed_min' in df_.columns:
         reference_speed_max = max(reference_speed_max, df_['reference_speed_min'].max())
     if 'reference_speed_mean' in df_.columns:
@@ -113,7 +113,7 @@ def Categorizer_Dic(df_: pd.DataFrame):
     if 'reference_speed_max' in df_.columns:
         Features['reference_speed_max'] = {'bins': [0, 20, 40, 60, reference_speed_max],'labels': ['[0-20)', '[20-40)', '[40-60)', '[60-max]']}
 
-    average_speed_max = 0
+    average_speed_max = 80
     if 'average_speed_min' in df_.columns:
         average_speed_max = max(average_speed_max, df_['average_speed_min'].max())
     if 'average_speed_mean' in df_.columns:
