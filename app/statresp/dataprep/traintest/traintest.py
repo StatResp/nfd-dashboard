@@ -115,14 +115,10 @@ def create_predict_dataset(df=None, df_train=None, metadata=None,model=None):
                 
             #Adding Cluster if needed
             #if model is defined then we know the clustering type so we can add the cluster_label here. Otherwise we just skip. 
-            try: 
-                directory=metadata['Input_Address']+"/trained_models/clusters"+"/"+model.metadata['Cluster_Name']
-                Cluster = pickle.load(open(directory+'.sav', 'rb'))
-                df_predict= Cluster.pred(df_predict,metadata)                  
-            except:
-                #pass
-                raise ValueError('{} does not exist.'.format(directory))
-          
+            directory=metadata['Input_Address']+"/trained_models/clusters"+"/"+model.metadata['Cluster_Name']
+            Cluster = pickle.load(open(directory+'.sav', 'rb'))
+            df_predict= Cluster.pred(df_predict,metadata)                  
+            
         #%%
         elif Predicton_Type_Tag== 'Future':
             if df_train is None:
