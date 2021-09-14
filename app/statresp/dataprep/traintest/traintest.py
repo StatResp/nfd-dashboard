@@ -120,7 +120,8 @@ def create_predict_dataset(df=None, df_train=None, metadata=None,model=None):
                 Cluster = pickle.load(open(directory+'.sav', 'rb'))
                 df_predict= Cluster.pred(df_predict,metadata)                  
             except:
-                pass               
+                #pass
+                raise ValueError('{} does not exist.'.format(directory))
           
         #%%
         elif Predicton_Type_Tag== 'Future':
