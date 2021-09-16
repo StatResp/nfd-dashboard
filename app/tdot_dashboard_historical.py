@@ -19,7 +19,7 @@ import dash_html_components as html
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output,State
 from plotly import graph_objs as go
 from plotly.graph_objs import *
 from datetime import datetime as dt
@@ -109,6 +109,10 @@ df = df.rename(columns={'gps_coordinate_longitude': 'longitude',
 
 startdate = df_merged['time_local'].dt.date.min()
 enddate = df_merged['time_local'].dt.date.max()
+MIN_YR = startdate.year
+MAX_YR = enddate.year
+
+
 counties = df.county_inrix.drop_duplicates()
 tncounties = pd.read_csv('counties.csv')
 tncounties['county'] = tncounties['county'].str.lower()
@@ -181,16 +185,31 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                     )
                                 ],
                                 ),
+                        html.Div(id='year-div', children=[
+                            dcc.Markdown(
+                                '''  # Choose Year Range''', style={"margin": "0", "padding": "0"}),
+                                dcc.RangeSlider(
+                                    id="year_slider",
+                                    min=MIN_YR,
+                                    max=MAX_YR,
+                                    count=1,
+                                    step=1,
+                                    value=[MIN_YR, MAX_YR],
+                                    marks={yr: str(yr) for yr in range(
+                                        MIN_YR, MAX_YR + 1)},
+                                )
+                            ],                            
+                        ),
                         html.Div(id='start-date-div', className="card p-1 m-1 bg-white text-dark", children=[
                             dcc.Markdown(
                                 '''  # Start Date''', style={"margin": "0", "padding": "0"}),
                             dcc.DatePickerSingle(
                                 id="date-picker",
                                 min_date_allowed=startdate,
-                                number_of_months_shown=6,
+                                number_of_months_shown=4,
                                 max_date_allowed=enddate,
                                 initial_visible_month=startdate,
-                                date='2020-01-01',
+                                date=startdate,
                                 display_format="MMMM D, YYYY",
                                 style={"border": "0px solid black"},
                             )],
@@ -203,11 +222,11 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                          '''## End Date''', style={"margin": "0", "padding": "0"}),
                                      dcc.DatePickerSingle(
                                          id="date-picker-end",
-                                         number_of_months_shown=6,
+                                         number_of_months_shown=4,
                                          min_date_allowed=startdate,
                                          max_date_allowed=enddate,
                                          initial_visible_month=enddate,
-                                         date='2020-01-06',
+                                         date=enddate,
                                          display_format="MMMM D, YYYY",
                                          style={"border": "0px solid black"},
                                      )
@@ -453,6 +472,22 @@ app.clientside_callback(
 )
 
 # Incident Filterings
+
+@app.callback(
+    [Output("date-picker", "date"), Output("date-picker-end", "date")],
+    [Input("year_slider", "value")],
+    [State("date-picker", "date"), State("date-picker-end", "date")],
+)
+def update_date_range(slider_dates, date_range_start, date_range_end):
+    start_yr, end_yr = slider_dates[0], slider_dates[1]    
+
+    if date_range_start is not None:
+        date_range_start = str(start_yr) + date_range_start[4:]
+
+    if date_range_end is not None:
+        date_range_end = str(end_yr) + date_range_end[4:]
+
+    return date_range_start, date_range_end
 
 
 @ cache.memoize()
@@ -755,7 +790,7 @@ def update_map_incident_predictions(start_date, end_date, radius, counties, date
     if start_date2 is None or end_date2 is None:
         return empty_fig()
 
-    print(end_date2-start_date2)
+    #print(end_date2-start_date2)
 
     if (end_date2-start_date2).days >= 7 or len(counties) != 1:
         return empty_fig("Select a period of less than 7 days and select one county")
@@ -894,7 +929,7 @@ def update_map_incident_predictions(start_date, end_date, radius, counties, date
     # ]
     for k in range(len(fig.frames)):
         fig.frames[k]['layout'].update(
-            title_text=f'<b>{str(time_local[k])}</b>')
+            title_text=f'<b>{str(time_local[k])}</b> <br> Only top 20 percent shown.')
         fig.frames[k]['layout'].update(title_x=0.1)
         fig.frames[k]['layout'].update(
             title_font=dict(family='Arial Black', size=18, color="white" if darktheme else "#1E1E1E"))
