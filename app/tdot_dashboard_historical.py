@@ -812,8 +812,8 @@ def update_map_incident_predictions(start_date, end_date, radius, counties, date
     # result=result.drop('geometry',axis=1)
     # result=result.explode(['lat','lon'])
     time_local = result['time_local'].unique().tolist()
-    for k in time_local:
-        print(k)
+    # for k in time_local:
+    #     print(k)
 
     fig = go.Figure(data=create_prediction_frame(result[result.time_local == time_local[0]]),
                     frames=[go.Frame(data=create_prediction_frame(result[result.time_local == k]))
