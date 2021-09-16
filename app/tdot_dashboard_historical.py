@@ -19,13 +19,14 @@ import dash_html_components as html
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from dash.dependencies import Input, Output,State
+from dash.dependencies import Input, Output, State
 from plotly import graph_objs as go
 from plotly.graph_objs import *
 from datetime import datetime as dt
 from datetime import time as tt
 import dash_daq as daq
 # import dataextract
+import datetime
 import os
 import sys
 # import resource
@@ -188,17 +189,17 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                         html.Div(id='year-div', children=[
                             dcc.Markdown(
                                 '''  # Choose Year Range''', style={"margin": "0", "padding": "0"}),
-                                dcc.RangeSlider(
-                                    id="year_slider",
-                                    min=MIN_YR,
-                                    max=MAX_YR,
-                                    count=1,
-                                    step=1,
-                                    value=[MIN_YR, MAX_YR],
-                                    marks={yr: str(yr) for yr in range(
-                                        MIN_YR, MAX_YR + 1)},
-                                )
-                            ],                            
+                            dcc.RangeSlider(
+                                id="year_slider",
+                                min=MIN_YR,
+                                max=MAX_YR,
+                                count=1,
+                                step=1,
+                                value=[MIN_YR, MAX_YR],
+                                marks={yr: str(yr) for yr in range(
+                                    MIN_YR, MAX_YR + 1)},
+                            )
+                        ],
                         ),
                         html.Div(id='start-date-div', className="card p-1 m-1 bg-white text-dark", children=[
                             dcc.Markdown(
@@ -473,13 +474,14 @@ app.clientside_callback(
 
 # Incident Filterings
 
+
 @app.callback(
     [Output("date-picker", "date"), Output("date-picker-end", "date")],
     [Input("year_slider", "value")],
     [State("date-picker", "date"), State("date-picker-end", "date")],
 )
 def update_date_range(slider_dates, date_range_start, date_range_end):
-    start_yr, end_yr = slider_dates[0], slider_dates[1]    
+    start_yr, end_yr = slider_dates[0], slider_dates[1]
 
     if date_range_start is not None:
         date_range_start = str(start_yr) + date_range_start[4:]
@@ -487,7 +489,25 @@ def update_date_range(slider_dates, date_range_start, date_range_end):
     if date_range_end is not None:
         date_range_end = str(end_yr) + date_range_end[4:]
 
-    return date_range_start, date_range_end
+    new_start_date = dateparser.parse(date_range_start)
+    new_end_date = dateparser.parse(date_range_end)
+
+    if isinstance(new_start_date, datetime.datetime):
+        new_start_date = new_start_date.date()
+    if isinstance(new_end_date, datetime.datetime):
+        new_end_date = new_end_date.date()
+
+    if new_start_date > enddate:
+        new_start_date = enddate
+    if new_start_date < startdate:
+        new_start_date = startdate
+
+    if new_end_date > enddate:
+        new_end_date = enddate
+    if new_end_date < startdate:
+        new_end_date = startdate
+
+    return str(new_start_date), str(new_end_date)
 
 
 @ cache.memoize()
@@ -534,7 +554,7 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
     start_date = dateparser.parse(start_date)
     end_date = dateparser.parse(end_date)
 
-    if start_date is None or end_date is None:
+    if start_date is None or end_date is None or start_date > end_date:
         return None
 
     if True:
@@ -732,7 +752,7 @@ def update_incidents(start_date, end_date, counties, datemonth, timerange,   day
     result = return_incidents(
         start_date, end_date, counties, datemonth, timerange,   days)
     if result is None or len(result) == 0:
-        return empty_fig()
+        return "Incidents: %d" % (0), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
     timemin, timemax = timerange
     responsefilter = -1
 
@@ -790,7 +810,7 @@ def update_map_incident_predictions(start_date, end_date, radius, counties, date
     if start_date2 is None or end_date2 is None:
         return empty_fig()
 
-    #print(end_date2-start_date2)
+    # print(end_date2-start_date2)
 
     if (end_date2-start_date2).days >= 7 or len(counties) != 1:
         return empty_fig("Select a period of less than 7 days and select one county")
@@ -801,6 +821,20 @@ def update_map_incident_predictions(start_date, end_date, radius, counties, date
     latone = latInitial
     lonone = lonInitial
     zoomvalue = 9
+    if counties == None or len(counties) != 1:
+        latone = latInitial
+        lonone = lonInitial
+        zoomvalue = 6
+    else:
+        # find center of one county
+        onecounty = counties[0]
+        try:
+            latone = tncounties[tncounties.county ==
+                                onecounty].latitude.iloc[0]
+            lonone = tncounties[tncounties.county ==
+                                onecounty].longitude.iloc[0]
+        except:
+            pass
 
     if result is None or len(result) == 0:
         return empty_fig()
