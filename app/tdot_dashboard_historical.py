@@ -157,7 +157,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                 html.Div(
                     className="col-12 col-lg-3",
                     children=[
-                        dbc.Row(id='initial-div', form=True, no_gutters=True,
+                        dbc.Row(id='initial-div',  
                                 className="p-0 m-0 bg-white", style={"border": "none"},
                                 children=[
                                     dbc.Col(
@@ -166,7 +166,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                             className="p-0 m-0", style={"margin": "0", "padding": "0"}),
                                         width=10,
                                     ),
-                                    dbc.Row(form=True, no_gutters=True, children=[
+                                    dbc.Row(   children=[
                                         dbc.Col(
                                             html.I(id='sun', className='fas fa-sun p-0 m-0', style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
                                         ),
