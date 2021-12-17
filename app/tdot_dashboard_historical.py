@@ -155,9 +155,9 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                 children=[
                                     dbc.Col(
                                         dcc.Markdown(
-                                            '''# [Statresp.ai](https://statresp.ai) | TN Highway Incident Dashboard''',
+                                            '''# [Statresp.ai](https://statresp.ai)|TN Highways''',
                                             className="p-0 m-0", style={"margin": "0", "padding": "0"}),
-                                        width=10,
+                                        width=18,
                                     ),
                                     dbc.Row(   children=[
                                         dbc.Col(
@@ -179,7 +179,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                     )
                                 ],
                                 ),
-                        html.Div(id='year-div', children=[
+                        html.Div(id='year-div', style={"display": "none"}, children=[
                             dcc.Markdown(
                                 '''  # Choose Year Range''', style={"margin": "0", "padding": "0"}),
                             dcc.RangeSlider(
@@ -794,6 +794,7 @@ from datetime import date
 
 @app.callback(
     Output('pred-selector', 'options'),
+    Output('pred-selector', 'value'),
     [
      Input('county', 'value'),
      Input("time-slider", "value"),   Input("day-selector", "value"), Input("theme-toggle", "on"), ]
@@ -813,7 +814,7 @@ def return_options_for_pred_map(counties, timerange, days, darktheme):
         lonone = tncounties[tncounties.county ==
                                 onecounty].longitude.iloc[0]
     else:
-        return [{'label': 'NoResult','value':'NoResult'}]
+        return [{'label': 'NoResult','value':'NoResult'}], 'NoResult'
     timemin, timemax = timerange
     hourmax = int(timemax)
     hourmin = int(timemin)
@@ -832,13 +833,16 @@ def return_options_for_pred_map(counties, timerange, days, darktheme):
 
     result = df[timecondition & daycondition & countycondition]
 
+    if (result.empty or len(result)==0):
+        return [{'label': 'NoResult','value':'NoResult'}], 'NoResult'
+
     result=result.sort_values(['time_local'])    
     result['time_next']=result['time_local']+pd.Timedelta(4,'h')
     result['time_local']=result['time_local'].apply(str)
     result['time_next']=result['time_next'].apply(str)
     time_local=result['time_local'].unique().tolist()
     time_next=result[['time_local','time_next']].drop_duplicates()
-    return [{'label': str(i)+' to '+time_next[(time_next.time_local==i)][['time_next']].iloc[0], 'value': i} for i in time_local]
+    return [{'label': str(i)+' to '+time_next[(time_next.time_local==i)][['time_next']].iloc[0], 'value': i} for i in time_local], time_local[0]
 
 
 @app.callback(
@@ -923,6 +927,39 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
                           bearing=0,
                           zoom=zoomvalue,
                       ),
+                              updatemenus=[
+                                        dict(
+                                            buttons=(
+                                                [
+                                                    dict(
+                                                        args=[
+                                                            {
+                                                                "mapbox.zoom": zoomvalue,
+                                                                "mapbox.center.lon": lonone,
+                                                                "mapbox.center.lat": latone,
+                                                                "mapbox.bearing": 0,
+                                                                "mapbox.style": "dark" if darktheme else "light",
+                                                            }
+                                                        ],
+                                                        label="Reset Zoom",
+                                                        method="relayout",
+                                                    )
+                                                ]
+                                            ),
+                                            direction="left",
+                                            pad={"r": 0, "t": 0, "b": 0, "l": 0},
+                                            showactive=False,
+                                            type="buttons",
+                                            x=0.45,
+                                            y=0.02,
+                                            xanchor="left",
+                                            yanchor="bottom",
+                                            bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+                                            borderwidth=1,
+                                            bordercolor="#6d6d6d",
+                                            font=dict(color="white" if darktheme else "#1E1E1E"),
+                                        ),
+                                    ],
                       )
    
 
