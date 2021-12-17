@@ -798,59 +798,32 @@ def create_prediction_frame(pred):
 @cache.memoize()
 @app.callback(
     Output('map-incidents-predictions', 'figure'),
-    [Input("date-picker", "date"),
-     Input("date-picker-end", "date"),
-     Input("map-graph-radius", "value"),
+    [
+     #Input("date-picker", "date"),
+     #Input("date-picker-end", "date"),
+     #Input("map-graph-radius", "value"),
      Input('county', 'value'),
-     Input("month-selector", "value"),
+     #Input("month-selector", "value"),
      Input("time-slider", "value"),   Input("day-selector", "value"), Input("theme-toggle", "on"), ]
 )
-def update_map_incident_predictions(start_date, end_date, radius, counties, datemonth, timerange,   days, darktheme):
-    start_date2 = dateparser.parse(start_date)
-    end_date2 = dateparser.parse(end_date)
-
-    if start_date2 is None or end_date2 is None:
-        return empty_fig()
-
-    # print(end_date2-start_date2)
-
-    if (end_date2-start_date2).days >= 7 or len(counties) != 1:
-        return empty_fig("Select a period of less than 7 days and select one county")
-
-    result = return_predictions(
-        start_date, end_date, counties, datemonth, timerange, days).copy()
-
+#start_date, end_date, radius, datemonth,
+def update_map_incident_predictions( counties, timerange, days, darktheme):
+    
+    result=pd.read_pickle('https://storage.googleapis.com/tdot_statresp_prediction_results/_LATEST/DF_likelihood_spacetime.pkl')
     latone = latInitial
     lonone = lonInitial
     zoomvalue = 9
-    if counties == None or len(counties) != 1:
-        latone = latInitial
-        lonone = lonInitial
-        zoomvalue = 6
-    else:
-        # find center of one county
+    if counties is not None:
+        result=result[result.county_inrix.isin(counties)].copy()
+        print(counties)
         onecounty = counties[0]
-        try:
-            latone = tncounties[tncounties.county ==
+        latone = tncounties[tncounties.county ==
                                 onecounty].latitude.iloc[0]
-            lonone = tncounties[tncounties.county ==
+        lonone = tncounties[tncounties.county ==
                                 onecounty].longitude.iloc[0]
-        except:
-            pass
-
-    if result is None or len(result) == 0:
-        return empty_fig()
-
-    # result['lat']=result.geometry.apply(returnlat)
-    # result['lon']=result.geometry.apply(returnlon)
-    # result['color']=result.RF.apply(lambda x: int(x*100))
+    result=result.sort_values(['time_local'])
     result['time_local'] = result['time_local'].apply(str)
-    # result=result.drop('geometry',axis=1)
-    # result=result.explode(['lat','lon'])
     time_local = result['time_local'].unique().tolist()
-    # for k in time_local:
-    #     print(k)
-
     fig = go.Figure(data=create_prediction_frame(result[result.time_local == time_local[0]]),
                     frames=[go.Frame(data=create_prediction_frame(result[result.time_local == k]))
                             for k in time_local]
@@ -915,54 +888,7 @@ def update_map_incident_predictions(start_date, end_date, radius, counties, date
                           ),
                       ],
                       )
-
-    #fig.layout.updatemenus[0].buttons[1].args[1]["frame"]["duration"] = 4000
-
-    # fig['layout']['updatemenus'][0]['pad'] = dict(r=0, t=0)
-    # fig["layout"]["updatemenus"] = [
-    #     {
-    #         "buttons": [
-    #             {
-    #                 "args": [
-    #                     {
-    #                         "mapbox.zoom": zoomvalue,
-    #                         "mapbox.center.lon": lonone,
-    #                         "mapbox.center.lat": latone,
-    #                         "mapbox.bearing": 0,
-    #                         "mapbox.style": "dark" if darktheme else "light",
-    #                     }
-    #                 ],
-    #                 "label": "Reset Zoom",
-    #                 "method": "relayout"
-
-    #             },
-    #             {
-    #                 "args": [None, {"fromcurrent": True}],
-    #                 "label": "Play",
-    #                 "method": "animate"
-    #             },
-    #             {
-    #                 "args": [[None], {"frame": {"duration": 0, "redraw": False},
-    #                                   "mode": "immediate",
-    #                                   "transition": {"duration": 0}}],
-    #                 "label": "Pause",
-    #                 "method": "animate"
-    #             }
-    #         ],
-    #         "direction": "left",
-    #         "pad": {"r": 0, "t": 0, "b": 0, "l": 0},
-    #         "showactive": False,
-    #         "type": "buttons",
-    #         "x": 0.45,
-    #         "xanchor": "left",
-    #         "y": 0.02,
-    #         "yanchor": "bottom",
-    #         "bgcolor":  "#1E1E1E" if darktheme else "#f8f9fa",
-    #         "borderwidth": 1,
-    #         "bordercolor": "#6d6d6d",
-    #         "font": {"color": "white" if darktheme else "#1E1E1E"}
-    #     }
-    # ]
+   
     for k in range(len(fig.frames)):
         fig.frames[k]['layout'].update(
             title_text=f'<b>{str(time_local[k])}</b> <br> Only top 20 percent shown.')
