@@ -39,7 +39,7 @@ from plotly.subplots import make_subplots
 import pandas as pd
 import os
 import shapely.geometry
-
+from shapely import wkt
 
 def returnlat(feature):
     lats = []
@@ -75,14 +75,7 @@ pd.set_option('display.max_columns', None)
 
 seg = pd.read_pickle('data/tdot/grouped_inrix.pkl')
 seg = seg[seg.frc == 0]
-predRF = pd.read_pickle('data/tdot/DF_likelihood_spacetime_RF.pkl')
-predRF = predRF.merge(
-    seg[['grouped_xdsegid', 'county_inrix', 'geometry']], on='grouped_xdsegid')
-predRF = predRF[['RF', 'county_inrix',
-                 'time_local', 'geometry', 'grouped_xdsegid']]
-predRF['day_of_week'] = predRF['time_local'].dt.dayofweek
-predRF['month'] = predRF['time_local'].dt.month
-predRF['year'] = predRF['time_local'].dt.year
+
 seg = None
 
 
@@ -348,7 +341,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                         html.Div(id='time-slider-div', className="card p-1 m-1 bg-white text-dark",
                                  children=[
                                      dcc.Markdown(
-                                         '''## Incident Time'''),
+                                         '''## Time Range'''),
                                      dcc.RangeSlider(
                                          id='time-slider',
                                          min=0,
@@ -399,12 +392,23 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                         html.Div(id='maps-tabs-div', className="p-0 m-0 card  bg-white text-dark",
                                  children=[
                                      dbc.Tabs(id='tabs', active_tab="incidents", children=[
-                                         dbc.Tab(label='Incidents Total', tab_id='incidents', children=[dcc.Loading(
+                                         dbc.Tab(label='Past Incidents', tab_id='incidents', children=[dcc.Loading(
                                              id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
-                                         dbc.Tab(label='Incidents by Month', tab_id='incidents-month', children=[dcc.Loading(
+                                         dbc.Tab(label='Past Incidents by Month', tab_id='incidents-month', children=[dcc.Loading(
                                              id="loading-icon-incidents-month", children=[dcc.Graph(id="map-incidents-month"), ], type='default')]),
-                                         dbc.Tab(label='Predictions', tab_id='incidents-predictions', children=[dcc.Loading(
-                                             id="loading-icon-incidents-predictions", children=[dcc.Graph(id="map-incidents-predictions"), ], type='default')]),
+                                         dbc.Tab(label='Future Likelihoods', tab_id='incidents-predictions', children=[dcc.Loading(
+                                             id="loading-icon-incidents-predictions", children=[
+                                                                       dcc.Graph(id="map-incidents-predictions"),dcc.Dropdown(
+                                         id="pred-selector",
+                                         options=[
+                                            #  {'label': 'Jan', 'value': 1},
+                                            #  {'label': 'Feb', 'value': 2},
+                                            #  {'label': 'Mar', 'value': 3},
+                                            #  {'label': 'Apr', 'value': 4},
+                                            #  {'label': 'May', 'value': 5},                                         
+                                         ], multi=False,
+                                     ),
+                                                 ], type='default')]),
                                      ]
                                      ),
                                  ]),
@@ -509,44 +513,6 @@ def update_date_range(slider_dates, date_range_start, date_range_end):
 
     return str(new_start_date), str(new_end_date)
 
-
-@ cache.memoize()
-def return_predictions(start_date, end_date, counties, months, timerange, days):
-    start_date = dateparser.parse(start_date)
-    end_date = dateparser.parse(end_date)
-    if True:
-        date_condition = ((predRF['time_local'] >= start_date)
-                          & (predRF['time_local'] <= end_date))
-        if days is None or len(days) == 0:
-            weekday_condition = (True)
-        else:
-            weekday_condition = ((predRF['day_of_week']).isin(days))
-        if months is None or len(months) == 0:
-            month_condition = True
-        else:
-            month_condition = ((predRF['month'].isin(months)))
-        timemin, timemax = timerange
-        hourmax = int(timemax)
-        hourmin = int(timemin)
-
-        if counties is None or len(counties) == 0:
-            county_condition = True
-        else:
-            county_condition = ((predRF['county_inrix'].isin(counties)))
-        starttime = tt(hour=hourmin)
-        if hourmax != 24:
-            endtime = tt(hour=max(0, hourmax-1), second=59)
-        else:
-            endtime = tt(hour=23, second=59)
-        timecondition = ((predRF['time_local'].dt.time >= starttime)
-                         & (predRF['time_local'].dt.time <= endtime))
-        result = predRF[timecondition & date_condition &
-                        month_condition & weekday_condition & county_condition]
-        result = result.sort_values(by=['time_local'])
-    else:
-        print("Exception in user code:")
-        traceback.print_exc(file=sys.stdout)
-    return result
 
 
 @ cache.memoize()
@@ -769,15 +735,34 @@ for i in range(0, 101, 1):
         {i: rgb2hex(int(255 * cmap(i)[0]), int(255 * cmap(i)[1]), int(255 * cmap(i)[2]))})
 
 
-def plotly_linestring(linestring, grouped_xdsegid, prediction):
+def plotly_linestring(linestring, grouped_xdsegid, prediction, first=False):
     colorval = discr_map[int(prediction*100)]
-    return go.Scattermapbox(
-        lat=np.array(np.array(linestring.coords)[:, 1]),
-        lon=np.array(np.array(linestring.coords)[:, 0]),
-        mode='lines',
-        name="group {}".format(grouped_xdsegid),
-        line={'color': colors.to_hex(colorval, keep_alpha=False), 'width': 4},
-        text="likelihood {0}".format(prediction)
+    if first:
+        return go.Scattermapbox(
+            lat=np.array(np.array(linestring.coords)[:, 1]),
+            lon=np.array(np.array(linestring.coords)[:, 0]),
+            mode='lines+markers',
+             marker=dict(
+            size=0,
+            showscale=True,
+            colorscale=[[0, 'green'],
+                        [0.5, 'yellow'],
+                        [1, 'red']],
+            cmin=0,
+            cmax=1
+        ),
+            name="group {}".format(grouped_xdsegid),
+            line=dict(color= colors.to_hex(colorval, keep_alpha=False), width= 4),
+            text="likelihood {0}".format(prediction)
+    )
+    else:
+        return go.Scattermapbox(
+            lat=np.array(np.array(linestring.coords)[:, 1]),
+            lon=np.array(np.array(linestring.coords)[:, 0]),
+            mode='lines',
+            name="group {}".format(grouped_xdsegid),
+            line=dict(color= colors.to_hex(colorval, keep_alpha=False), width= 4),
+            text="likelihood {0}".format(prediction)
     )
 
 
@@ -790,12 +775,72 @@ def create_prediction_frame(pred):
             linestrings = feature.geoms
         else:
             continue
+        first=True
         for linestring in linestrings:
-            figures.append(plotly_linestring(linestring, name, prediction))
+            figures.append(plotly_linestring(linestring, name, prediction,first))
+            first=False
     return figures
 
 
+
 @cache.memoize()
+def get_prediction_frame(date):
+    result= pd.read_pickle('https://storage.googleapis.com/tdot_statresp_prediction_results/_LATEST/DF_likelihood_spacetime.pkl')
+    result['dayofweek']=result.time_local.dt.dayofweek
+    return result
+
+
+from datetime import date
+
+@app.callback(
+    Output('pred-selector', 'options'),
+    [
+     Input('county', 'value'),
+     Input("time-slider", "value"),   Input("day-selector", "value"), Input("theme-toggle", "on"), ]
+)
+def return_options_for_pred_map(counties, timerange, days, darktheme):
+    today = date.today()
+    df=get_prediction_frame(today.strftime("%d/%m/%Y"))    
+    countycondition=True
+    daycondition=True
+    timecondition=True
+    if counties is not None and len(counties) == 1:
+        countycondition=(df.county_inrix.isin(counties))
+        #print(counties)
+        onecounty = counties[0]
+        latone = tncounties[tncounties.county ==
+                                onecounty].latitude.iloc[0]
+        lonone = tncounties[tncounties.county ==
+                                onecounty].longitude.iloc[0]
+    else:
+        return [{'label': 'NoResult','value':'NoResult'}]
+    timemin, timemax = timerange
+    hourmax = int(timemax)
+    hourmin = int(timemin)
+  
+    if hourmin>0 or hourmax <24:
+        starttime = tt(hour=hourmin)
+        if hourmax != 24:
+            endtime = tt(hour=max(0, hourmax-1), second=59)
+        else:
+            endtime = tt(hour=23, second=59)
+        #print(starttime,endtime)
+        timecondition = ((df['time_local'].dt.time >= starttime) & (df['time_local'].dt.time <= endtime))
+
+    if (days is not None and len(days)>=1):
+        daycondition=(df.dayofweek.isin(days))
+
+    result = df[timecondition & daycondition & countycondition]
+
+    result=result.sort_values(['time_local'])    
+    result['time_next']=result['time_local']+pd.Timedelta(4,'h')
+    result['time_local']=result['time_local'].apply(str)
+    result['time_next']=result['time_next'].apply(str)
+    time_local=result['time_local'].unique().tolist()
+    time_next=result[['time_local','time_next']].drop_duplicates()
+    return [{'label': str(i)+' to '+time_next[(time_next.time_local==i)][['time_next']].iloc[0], 'value': i} for i in time_local]
+
+
 @app.callback(
     Output('map-incidents-predictions', 'figure'),
     [
@@ -804,38 +849,73 @@ def create_prediction_frame(pred):
      #Input("map-graph-radius", "value"),
      Input('county', 'value'),
      #Input("month-selector", "value"),
-     Input("time-slider", "value"),   Input("day-selector", "value"), Input("theme-toggle", "on"), ]
+     Input("theme-toggle", "on"),Input("pred-selector","value") ]
 )
 #start_date, end_date, radius, datemonth,
-def update_map_incident_predictions( counties, timerange, days, darktheme):
-    
-    result=pd.read_pickle('https://storage.googleapis.com/tdot_statresp_prediction_results/_LATEST/DF_likelihood_spacetime.pkl')
+def update_map_incident_predictions( counties, darktheme,timechosen):
+
+    #print('inside the map prediction')
+    today = date.today()
+    df=get_prediction_frame(today.strftime("%d/%m/%Y"))
     latone = latInitial
     lonone = lonInitial
     zoomvalue = 9
-    if counties is not None:
-        result=result[result.county_inrix.isin(counties)].copy()
-        print(counties)
+    countycondition=True
+    daycondition=True
+    timecondition=True
+
+    if counties is not None and len(counties) == 1:
+        countycondition=(df.county_inrix.isin(counties))
+        #print(counties)
         onecounty = counties[0]
         latone = tncounties[tncounties.county ==
                                 onecounty].latitude.iloc[0]
         lonone = tncounties[tncounties.county ==
                                 onecounty].longitude.iloc[0]
+    else:
+        return empty_fig("Please select a county to see prediction results")
+
+    if timechosen is None or len(timechosen)==0:
+        return empty_fig("Please select a specific date and time from drop down above.")
+
+    timecondition=(df.time_local==timechosen)
+    result = df[timecondition & daycondition & countycondition]
+
+    if (result.empty or len(result)==0):
+        return empty_fig("No data found. We only generate for segments that rank in top 20% for incident rates.")
+
+
     result=result.sort_values(['time_local'])
+    result['time_next']=result['time_local']+pd.Timedelta(4,'h')
+    result['time_next']=result['time_next'].apply(str)
     result['time_local'] = result['time_local'].apply(str)
+    result['geometry']=result['geometry'].apply(wkt.loads)
     time_local = result['time_local'].unique().tolist()
-    fig = go.Figure(data=create_prediction_frame(result[result.time_local == time_local[0]]),
-                    frames=[go.Frame(data=create_prediction_frame(result[result.time_local == k]))
-                            for k in time_local]
-                    )
+    time_next=result['time_next'].unique().tolist()
+
+
+    fig = go.Figure(data=create_prediction_frame(result[result.time_local == time_local[0]]))
 
     # fig = px.line_mapbox(result,lat='lat', lon='lon', hover_name='RF',color='color',
     #                     line_group='grouped_xdsegid',color_discrete_map=discr_map,
-    #                  mapbox_style="stamen-terrain",  zoom=11,animation_frame='time_local')
+    #    
+    # 
+    #               mapbox_style="stamen-terrain",  zoom=11,animation_frame='time_local')
+
+     
+
 
     fig.update_layout(autosize=True,
                       margin=go.layout.Margin(l=0, r=35, t=0, b=0),
                       showlegend=False,
+                      title= dict( 
+                            text='<b>'+ time_local[0]+ ' to ' + time_next[0] + '</b> (Only segments with top 20 percent rates shown).',
+                            x=0.25,
+                            font=dict(color="white" if darktheme else "#1E1E1E"),
+                            y=0.96,
+                            xanchor="left",
+                            yanchor="bottom",
+                            ),
                       mapbox=dict(
                           accesstoken=mapbox_access_token,
                           center=dict(lat=latone, lon=lonone),
@@ -843,61 +923,9 @@ def update_map_incident_predictions( counties, timerange, days, darktheme):
                           bearing=0,
                           zoom=zoomvalue,
                       ),
-                      updatemenus=[
-                          dict(
-                              buttons=(
-                                  [
-                                      dict(
-                                          args=[
-                                              {
-                                                  "mapbox.zoom": zoomvalue,
-                                                  "mapbox.center.lon": lonone,
-                                                  "mapbox.center.lat": latone,
-                                                  "mapbox.bearing": 0,
-                                                  "mapbox.style": "dark" if darktheme else "light",
-                                              }
-                                          ],
-                                          label="Reset Zoom",
-                                          method="relayout",
-                                      ),
-                                      dict(label="Play",
-                                           method="animate",
-                                           args=[None, {'frame': {'duration': 2000}}]),
-                                      {
-                                          "args": [[None], {"frame": {"duration": 0, "redraw": False},
-                                                            "mode": "immediate",
-                                                            "transition": {"duration": 0}}],
-                                          "label": "Pause",
-                                          "method": "animate"
-                                      }
-                                  ]
-                              ),
-                              direction="left",
-                              pad={"r": 0, "t": 0, "b": 0, "l": 0},
-                              showactive=False,
-                              type="buttons",
-                              x=0.45,
-                              y=0.02,
-                              xanchor="left",
-                              yanchor="bottom",
-                              bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
-                              borderwidth=1,
-                              bordercolor="#6d6d6d",
-                              font=dict(
-                                  color="white" if darktheme else "#1E1E1E"),
-                          ),
-                      ],
                       )
    
-    for k in range(len(fig.frames)):
-        fig.frames[k]['layout'].update(
-            title_text=f'<b>{str(time_local[k])}</b> <br> Only top 20 percent shown.')
-        fig.frames[k]['layout'].update(title_x=0.1)
-        fig.frames[k]['layout'].update(
-            title_font=dict(family='Arial Black', size=18, color="white" if darktheme else "#1E1E1E"))
-        fig.frames[k]['layout'].update(title_y=0.92)
-        fig.frames[k]['layout'].update(title_yanchor="bottom")
-        fig.frames[k]['layout'].update(title_xanchor="left")
+
     return fig
 
 
