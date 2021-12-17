@@ -6,7 +6,7 @@ pyarrow
 gunicorn>=19.7.1
 plotly>=4.9.0
 dash>=1.16
-dash-bootstrap-components
+dash-bootstrap-components==0.13.1
 dask[complete]
 fastparquet
 dash-renderer>=1.6.0
