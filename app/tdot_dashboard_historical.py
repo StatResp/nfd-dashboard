@@ -157,11 +157,10 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                         dcc.Markdown(
                                             '''# [Statresp.ai](https://statresp.ai)|TN Highways''',
                                             className="p-0 m-0", style={"margin": "0", "padding": "0"}),
-                                        width=18,
+                                        width=18, style={"margin": "0", "padding": "0"}
                                     ),
-                                    dbc.Row(   children=[
-                                        dbc.Col(
-                                            html.I(id='sun', className='fas fa-sun p-0 m-0', style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
+                                    dbc.Col(
+                                            html.I(id='sun', className='fas fa-sun p-0 m-0', style={"margin": "0", "padding": "0", "display":"none"}),  style={"margin": "0", "padding": "0"},
                                         ),
                                         dbc.Col(daq.BooleanSwitch(
                                             id='theme-toggle',
@@ -175,11 +174,11 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                         dbc.Col(
                                             html.I(id='moon', className='fas fa-moon p-0 m-0', style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
 
-                                        )]
-                                    )
+                                        )
+                         
                                 ],
                                 ),
-                        html.Div(id='year-div', style={"display": "none"}, children=[
+                        html.Div(id='year-div', children=[
                             dcc.Markdown(
                                 '''  # Choose Year Range''', style={"margin": "0", "padding": "0"}),
                             dcc.RangeSlider(
@@ -355,7 +354,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                  ]
                                  ),
 
-                        html.Div(id='radius-div', className="card p-1 m-1 bg-white text-dark",
+                        html.Div(id='radius-div', className="card p-1 m-1 bg-white text-dark", style={"display": "none"},
                                  children=[
                                      dcc.Markdown(
                                          '''## Heatmap density radius.'''),
@@ -372,7 +371,6 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                  ),
 
 
-
                         html.Div(id='incidents-count-div', className="card p-1 m-1 bg-white text-dark",
                                  children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                                            html.P(
@@ -383,6 +381,10 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                      'Response', id='response-text', style={'text-align': 'left', 'font-weight': 'bold'}),
                                  ],
                                  ),
+
+                         html.Div(className="row p-0 m-0 bg-white text-dark", id='footer-div',
+             children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
+                                    '''Funding by TDOT and National Science Foundation. See [StatResp Project for details](https://statresp.ai/)''', id='footer', className="col p-0 m-0"), ]),
                     ],
                 ),
                 # Column for app graphs and plots
@@ -396,9 +398,10 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                              id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
                                          dbc.Tab(label='Past Incidents by Month', tab_id='incidents-month', children=[dcc.Loading(
                                              id="loading-icon-incidents-month", children=[dcc.Graph(id="map-incidents-month"), ], type='default')]),
-                                         dbc.Tab(label='Future Likelihoods', tab_id='incidents-predictions', children=[dcc.Loading(
-                                             id="loading-icon-incidents-predictions", children=[
-                                                                       dcc.Graph(id="map-incidents-predictions"),dcc.Dropdown(
+                                         dbc.Tab(label='Future Likelihoods', tab_id='incidents-predictions', children=[
+                                                  html.Div(id='prediction-div', className="card p-1 m-1 bg-white text-dark", 
+                                 children=[
+                                     dcc.Dropdown(
                                          id="pred-selector",
                                          options=[
                                             #  {'label': 'Jan', 'value': 1},
@@ -407,7 +410,14 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                             #  {'label': 'Apr', 'value': 4},
                                             #  {'label': 'May', 'value': 5},                                         
                                          ], multi=False,
-                                     ),
+                                         placeholder="Select a time",
+                                         
+                                     )
+                                 ]
+                                 ),
+                                             dcc.Loading(
+                                             id="loading-icon-incidents-predictions", children=[
+                                                                       dcc.Graph(id="map-incidents-predictions"),
                                                  ], type='default')]),
                                      ]
                                      ),
@@ -441,9 +451,9 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
         ), ],
 ),
 
-    html.Div(className="row p-0 m-0 bg-white text-dark", id='footer-div',
-             children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
-                                    '''Funding by TDOT and National Science Foundation.''', id='footer', className="col p-0 m-0"), ]),
+    # html.Div(className="row p-0 m-0 bg-white text-dark", id='footer-div-2',
+    #          children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
+    #                                 '''Funding by TDOT and National Science Foundation. See [StatResp Project for details](https://statresp.ai/)''', id='footer-2', className="col p-0 m-0"), ]),
     html.Div(id="blank", children=[dcc.Markdown(
         '''dark theme''')], style={"display": "none"}),
 ]
@@ -657,7 +667,7 @@ def return_merged(start_date, end_date, counties, months, timerange, days):
      Output('day-of-week-selector-div', "className"),
      Output('feature-selector', "className"),
      Output('time-slider-div', "className"),
-     Output('radius-div', "className"),
+     Output('prediction-div', "className"),
      Output('incidents-count-div', "className"),
      Output('maps-tabs-div', "className"),
      Output('histogram-basis-div', "className"),
@@ -721,10 +731,10 @@ def update_incidents(start_date, end_date, counties, datemonth, timerange,   day
     timemin, timemax = timerange
     responsefilter = -1
     if result is None or len(result) == 0:
-        return "Incidents: %d" % (0), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
+        return " Past Incidents: %d" % (0), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
    
 
-    return "Incidents: %d" % (len(result)), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
+    return "Past Incidents: %d" % (len(result)), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
 
 
 cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
@@ -738,7 +748,7 @@ for i in range(0, 101, 1):
 def plotly_linestring(linestring, grouped_xdsegid, prediction, first=False):
     colorval = discr_map[int(prediction*100)]
     if first:
-        return go.Scattermapbox(
+        fig= go.Scattermapbox(
             lat=np.array(np.array(linestring.coords)[:, 1]),
             lon=np.array(np.array(linestring.coords)[:, 0]),
             mode='lines+markers',
@@ -754,7 +764,8 @@ def plotly_linestring(linestring, grouped_xdsegid, prediction, first=False):
             name="group {}".format(grouped_xdsegid),
             line=dict(color= colors.to_hex(colorval, keep_alpha=False), width= 4),
             text="likelihood {0}".format(prediction)
-    )
+    )        
+        return fig
     else:
         return go.Scattermapbox(
             lat=np.array(np.array(linestring.coords)[:, 1]),
@@ -920,6 +931,7 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
                             xanchor="left",
                             yanchor="bottom",
                             ),
+
                       mapbox=dict(
                           accesstoken=mapbox_access_token,
                           center=dict(lat=latone, lon=lonone),
@@ -962,6 +974,7 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
                                     ],
                       )
    
+    #fig.update_traces(marker_colorbar_tickfont_color="white" if darktheme else "#1E1E1E", selector=dict(type='scatter'))
 
     return fig
 
