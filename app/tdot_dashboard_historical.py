@@ -1,45 +1,37 @@
 # %%
-from colormap import rgb2hex
-import matplotlib.colors
-import time
-from resource import *
-import traceback
-import dateparser
-from matplotlib import cm, colors
-import dash
-import flask
-import pyarrow.parquet as pq
-import os
-# from flask_caching import Cache
-from dask import dataframe as dd
-from random import randint
-from flask_caching import Cache
-from dash import dcc
-from dash import html
-import pandas as pd
-import numpy as np
-import plotly.express as px
-from dash.dependencies import Input, Output, State
-from plotly import graph_objs as go
-from plotly.graph_objs import *
-from datetime import datetime as dt
-from datetime import time as tt
-import dash_daq as daq
 # import dataextract
 import datetime
 import os
 import sys
+import traceback
+from datetime import time as tt
+# from flask_caching import Cache
+from random import randint
+
+import dash
 # import resource
-import geopandas as gpd
 import dash_bootstrap_components as dbc
-from statresp.datajoin.cleaning.categorizer import categorize_numerical_features, Filter_Combo_Builder, FILTER_calculator
+import dash_daq as daq
+import dateparser
+import flask
+import matplotlib.colors
+import numpy as np
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import pandas as pd
-import os
 import shapely.geometry
+from colormap import rgb2hex
+from dash import dcc
+from dash import html
+from dash.dependencies import Input, Output, State
+from flask_caching import Cache
+from matplotlib import colors
+from plotly import graph_objs as go
 from shapely import wkt
+
+from statresp.datajoin.cleaning.categorizer import categorize_numerical_features, Filter_Combo_Builder, \
+    FILTER_calculator
+
 
 def returnlat(feature):
     lats = []
@@ -78,7 +70,6 @@ seg = seg[seg.frc == 0]
 
 seg = None
 
-
 latInitial = 36.16228
 lonInitial = -86.774372
 metadata = {}
@@ -87,15 +78,18 @@ metadata['incident_pickle_address'] = 'data/tdot/incident'
 metadata['pred_name_TF'] = 'incident_occurred'
 available_features = ['is_weekend', 'window',
                       'speed_mean', 'average_speed_mean', 'reference_speed_mean', 'congestion_mean', 'miles', 'lanes',
-                      'isf_length', 'slope_median', 'ends_ele_diff', 'temp_mean', 'wind_spd_mean', 'vis_mean', 'precip_mean',
+                      'isf_length', 'slope_median', 'ends_ele_diff', 'temp_mean', 'wind_spd_mean', 'vis_mean',
+                      'precip_mean',
                       'mean_incidents_last_7_days', 'mean_incidents_last_4_weeks', 'mean_incidents_over_all_windows',
                       ]
-df_merged = pd.read_parquet(metadata['merged_pickle_address'], columns=available_features+[
-                            'time_local', 'county', 'month', 'incident_occurred'])
+df_merged = pd.read_parquet(metadata['merged_pickle_address'], columns=available_features + [
+    'time_local', 'county', 'month', 'incident_occurred'])
 if not 'day_of_week' in df_merged.columns:
     df_merged['day_of_week'] = df_merged['time_local'].dt.dayofweek
 df = pd.read_parquet(metadata['incident_pickle_address'], columns=['frc', 'incident_id', 'county_inrix',
-                                                                   'time_local', 'day_of_week', 'month', 'gps_coordinate_longitude', 'gps_coordinate_latitude'])
+                                                                   'time_local', 'day_of_week', 'month',
+                                                                   'gps_coordinate_longitude',
+                                                                   'gps_coordinate_latitude'])
 df = df[df['frc'] == 0]
 df['month-year'] = df['time_local'].dt.strftime('%b %Y')
 df = df.rename(columns={'gps_coordinate_longitude': 'longitude',
@@ -106,7 +100,6 @@ enddate = df_merged['time_local'].dt.date.max()
 MIN_YR = startdate.year
 MAX_YR = enddate.year
 
-
 counties = df.county_inrix.drop_duplicates()
 tncounties = pd.read_csv('counties.csv')
 tncounties['county'] = tncounties['county'].str.lower()
@@ -114,7 +107,6 @@ tncounties['county'] = tncounties['county'].str.lower()
 counties = counties.tolist()
 counties.sort()
 cluster_list = [1, 2]
-
 
 external_stylesheets = [
     {
@@ -130,8 +122,9 @@ external_stylesheets = [
 # set the server and global parameters
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
-app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=external_stylesheets, server=server, meta_tags=[
-                {"name": "viewport", "content": "width=device-width"}])
+app = dash.Dash(__name__, title='Incident Dashboard', update_title=None, external_stylesheets=external_stylesheets,
+                server=server, meta_tags=[
+        {"name": "viewport", "content": "width=device-width"}])
 app.title = 'Incident Dashboard'
 
 cache = Cache(app.server,
@@ -150,17 +143,20 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                 html.Div(
                     className="col-12 col-lg-3",
                     children=[
-                        dbc.Row(id='initial-div',  
-                                className="p-0 m-0 bg-white", style={"border": "none"},
+                        dbc.Row(id='initial-div',
+                                className="p-0 m-0 g-0 bg-white", style={"border": "none", "padding": "0"},
                                 children=[
                                     dbc.Col(
                                         dcc.Markdown(
                                             '''# [Statresp.ai](https://statresp.ai)|TN Highways''',
                                             className="p-0 m-0", style={"margin": "0", "padding": "0"}),
-                                        width=18, style={"margin": "0", "padding": "0"}
+                                        width=10, style={"margin": "0", "padding": "0"}
                                     ),
-                                    dbc.Col(
-                                            html.I(id='sun', className='fas fa-sun p-0 m-0', style={"margin": "0", "padding": "0", "display":"none"}),  style={"margin": "0", "padding": "0"},
+                                    dbc.Row(form=True, no_gutters=True, children=[
+                                        dbc.Col(
+                                            html.I(id='sun', className='fas fa-sun p-0 m-0',
+                                                   style={"margin": "0", "padding": "0"}),
+                                            style={"margin": "0", "padding": "0"},
                                         ),
                                         dbc.Col(daq.BooleanSwitch(
                                             id='theme-toggle',
@@ -172,10 +168,30 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                         ),
                                         ),
                                         dbc.Col(
-                                            html.I(id='moon', className='fas fa-moon p-0 m-0', style={"margin": "0", "padding": "0"}),  style={"margin": "0", "padding": "0"},
+                                            html.I(id='moon', className='fas fa-moon p-0 m-0',
+                                                   style={"margin": "0", "padding": "0"}),
+                                            style={"margin": "0", "padding": "0"},
 
-                                        )
-                         
+                                        )]
+                                            )
+                                    # dbc.Col(className="p-0 m-0 g-0",
+                                    #         children=[
+                                    #             html.I(id='sun', className='fas fa-sun p-0 m-0 g-0',
+                                    #                    style={"margin": "0", "padding": "0"}),
+                                    #             daq.BooleanSwitch(
+                                    #                 id='theme-toggle',
+                                    #                 persistence=True,
+                                    #                 labelPosition="bottom",
+                                    #                 className="p-0 m-0 g-0",
+                                    #                 style={"margin": "0",
+                                    #                        "padding": "0"}
+                                    #             ),
+                                    #             html.I(id='moon', className='fas fa-moon p-0 m-0 g-0',
+                                    #                    style={"margin": "0", "padding": "0"}),
+                                    #         ],
+                                    #         style={"margin": "0", "padding": "0"},
+                                    #         ),
+
                                 ],
                                 ),
                         html.Div(id='year-div', children=[
@@ -192,7 +208,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                     MIN_YR, MAX_YR + 1)},
                             )
                         ],
-                        ),
+                                 ),
                         html.Div(id='start-date-div', className="card p-1 m-1 bg-white text-dark", children=[
                             dcc.Markdown(
                                 '''  # Start Date''', style={"margin": "0", "padding": "0"}),
@@ -206,7 +222,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                 display_format="MMMM D, YYYY",
                                 style={"border": "0px solid black"},
                             )],
-                        ),
+                                 ),
 
                         html.Div(id='end-date-div',
                                  className="card p-1 m-1 bg-white text-dark",
@@ -348,13 +364,14 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                          step=1,
                                          value=[0, 24],
                                          marks={i: '{}:00'.format(
-                                                str(i).zfill(2)) for i in range(0, 25, 4)},
+                                             str(i).zfill(2)) for i in range(0, 25, 4)},
                                      ),
 
                                  ]
                                  ),
 
-                        html.Div(id='radius-div', className="card p-1 m-1 bg-white text-dark", style={"display": "none"},
+                        html.Div(id='radius-div', className="card p-1 m-1 bg-white text-dark",
+                                 style={"display": "none"},
                                  children=[
                                      dcc.Markdown(
                                          '''## Heatmap density radius.'''),
@@ -370,21 +387,26 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                  ]
                                  ),
 
-
                         html.Div(id='incidents-count-div', className="card p-1 m-1 bg-white text-dark",
-                                 children=[html.P('Incidents', id='incident-text', style={'text-align': 'left', 'font-weight': 'bold'}),
+                                 children=[html.P('Incidents', id='incident-text',
+                                                  style={'text-align': 'left', 'font-weight': 'bold'}),
                                            html.P(
-                                     'Months', id='month-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                                     html.P(
-                                     'Time', id='time-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                                     html.P(
-                                     'Response', id='response-text', style={'text-align': 'left', 'font-weight': 'bold'}),
-                                 ],
+                                               'Months', id='month-text',
+                                               style={'text-align': 'left', 'font-weight': 'bold'}),
+                                           html.P(
+                                               'Time', id='time-text',
+                                               style={'text-align': 'left', 'font-weight': 'bold'}),
+                                           html.P(
+                                               'Response', id='response-text',
+                                               style={'text-align': 'left', 'font-weight': 'bold'}),
+                                           ],
                                  ),
 
-                         html.Div(className="row p-0 m-0 bg-white text-dark", id='footer-div',
-             children=[dcc.Markdown('''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
-                                    '''Funding by TDOT and National Science Foundation. See [StatResp Project for details](https://statresp.ai/)''', id='footer', className="col p-0 m-0"), ]),
+                        html.Div(className="row p-0 m-0 bg-white text-dark", id='footer-div',
+                                 children=[dcc.Markdown(
+                                     '''Site designed by [ScopeLab](http://scopelab.ai/). Data source: TDOT. '''
+                                     '''Funding by TDOT and National Science Foundation. See [StatResp Project for details](https://statresp.ai/)''',
+                                     id='footer', className="col p-0 m-0"), ]),
                     ],
                 ),
                 # Column for app graphs and plots
@@ -395,55 +417,60 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
                                  children=[
                                      dbc.Tabs(id='tabs', active_tab="incidents", children=[
                                          dbc.Tab(label='Past Incidents', tab_id='incidents', children=[dcc.Loading(
-                                             id="loading-icon1", children=[dcc.Graph(id="map-graph"), ], type='default')]),
-                                         dbc.Tab(label='Past Incidents by Month', tab_id='incidents-month', children=[dcc.Loading(
-                                             id="loading-icon-incidents-month", children=[dcc.Graph(id="map-incidents-month"), ], type='default')]),
+                                             id="loading-icon1", children=[dcc.Graph(id="map-graph"), ],
+                                             type='default')]),
+                                         dbc.Tab(label='Past Incidents by Month', tab_id='incidents-month',
+                                                 children=[dcc.Loading(
+                                                     id="loading-icon-incidents-month",
+                                                     children=[dcc.Graph(id="map-incidents-month"), ],
+                                                     type='default')]),
                                          dbc.Tab(label='Future Likelihoods', tab_id='incidents-predictions', children=[
-                                                  html.Div(id='prediction-div', className="card p-1 m-1 bg-white text-dark", 
-                                 children=[
-                                     dcc.Dropdown(
-                                         id="pred-selector",
-                                         options=[
-                                            #  {'label': 'Jan', 'value': 1},
-                                            #  {'label': 'Feb', 'value': 2},
-                                            #  {'label': 'Mar', 'value': 3},
-                                            #  {'label': 'Apr', 'value': 4},
-                                            #  {'label': 'May', 'value': 5},                                         
-                                         ], multi=False,
-                                         placeholder="Select a time",
-                                         
-                                     )
-                                 ]
-                                 ),
+                                             html.Div(id='prediction-div', className="card p-1 m-1 bg-white text-dark",
+                                                      children=[
+                                                          dcc.Dropdown(
+                                                              id="pred-selector",
+                                                              options=[
+                                                                  #  {'label': 'Jan', 'value': 1},
+                                                                  # {'label': 'Feb', 'value': 2},
+                                                                  #  {'label': 'Mar', 'value': 3},
+                                                                  #  {'label': 'Apr', 'value': 4},
+                                                                  #  {'label': 'May', 'value': 5},
+                                                              ], multi=False,
+                                                              placeholder="Select a time",
+
+                                                          )
+                                                      ]
+                                                      ),
                                              dcc.Loading(
-                                             id="loading-icon-incidents-predictions", children=[
-                                                                       dcc.Graph(id="map-incidents-predictions"),
+                                                 id="loading-icon-incidents-predictions", children=[
+                                                     dcc.Graph(id="map-incidents-predictions"),
                                                  ], type='default')]),
                                      ]
-                                     ),
+                                              ),
+
                                  ]),
 
                         html.Div(id='histogram-basis-div', className="p-0 m-0 card bg-white text-dark", children=[
                             dbc.Tabs(id='histogram-basis', active_tab="month", children=[
-                                 dbc.Tab(label='Incident Frequency',
-                                         tab_id='totals'),
-                                 dbc.Tab(label='Incidents by Month',
-                                         tab_id='month'),
-                                 dbc.Tab(label='Incidents by Weekday',
-                                         tab_id='day'),
-                                 dbc.Tab(label='Incidents by Time of Day',
-                                         tab_id='hour'),
-                                 dbc.Tab(label='Comparitive Likelihood by Feature',
-                                         tab_id='incidentsfeature'),
-                                 dbc.Tab(label='Comparitive Likelihood',
-                                         tab_id='incidentsfeaturecombo'),
+                                dbc.Tab(label='Incident Frequency',
+                                        tab_id='totals'),
+                                dbc.Tab(label='Incidents by Month',
+                                        tab_id='month'),
+                                dbc.Tab(label='Incidents by Weekday',
+                                        tab_id='day'),
+                                dbc.Tab(label='Incidents by Time of Day',
+                                        tab_id='hour'),
+                                dbc.Tab(label='Comparitive Likelihood by Feature',
+                                        tab_id='incidentsfeature'),
+                                dbc.Tab(label='Comparitive Likelihood',
+                                        tab_id='incidentsfeaturecombo'),
 
-                                 ]),
+                            ]),
                             dcc.Loading(id="loading-icon2", className="flex-grow-1",
                                         children=[
                                             dcc.Graph(id="histogram"), ], type='default'),
                         ]
-                        ),
+                                 ),
 
                     ],
                 ),
@@ -457,7 +484,7 @@ app.layout = html.Div(id='container-div', className="container-fluid bg-white te
     html.Div(id="blank", children=[dcc.Markdown(
         '''dark theme''')], style={"display": "none"}),
 ]
-)
+                      )
 
 app.clientside_callback(
     """
@@ -485,6 +512,7 @@ app.clientside_callback(
     Output("blank", "children"),
     Input("theme-toggle", "on"),
 )
+
 
 # Incident Filterings
 
@@ -524,9 +552,8 @@ def update_date_range(slider_dates, date_range_start, date_range_end):
     return str(new_start_date), str(new_end_date)
 
 
-
-@ cache.memoize()
-def return_incidents(start_date, end_date, counties, months, timerange,   days):
+@cache.memoize()
+def return_incidents(start_date, end_date, counties, months, timerange, days):
     start_date = dateparser.parse(start_date)
     end_date = dateparser.parse(end_date)
 
@@ -554,7 +581,7 @@ def return_incidents(start_date, end_date, counties, months, timerange,   days):
             county_condition = ((df['county_inrix'].isin(counties)))
         starttime = tt(hour=hourmin)
         if hourmax != 24:
-            endtime = tt(hour=max(0, hourmax-1), second=59)
+            endtime = tt(hour=max(0, hourmax - 1), second=59)
         else:
             endtime = tt(hour=23, second=59)
         timecondition = ((df['time_local'].dt.time >= starttime)
@@ -629,7 +656,7 @@ def return_merged(start_date, end_date, counties, months, timerange, days):
             county_condition = ((df_merged['county'].isin(counties)))
         starttime = tt(hour=hourmin)
         if hourmax != 24:
-            endtime = tt(hour=max(0, hourmax-1), second=59)
+            endtime = tt(hour=max(0, hourmax - 1), second=59)
         else:
             endtime = tt(hour=23, second=59)
         timecondition = ((df_merged['time_local'].dt.time >= starttime)
@@ -641,19 +668,6 @@ def return_merged(start_date, end_date, counties, months, timerange, days):
         traceback.print_exc(file=sys.stdout)
 
     return result
-
-
-# county-selector-div,
-# cluster-selector-div,
-# month-selector-div,
-# day-of-week-selector-div,
-# feature-selector,
-# time-slider-div,
-# radius-div,
-# incidents-count-div,
-# maps-tabs-div,
-# histogram-basis-div,
-# footer-div,
 
 
 @app.callback(
@@ -678,63 +692,77 @@ def return_merged(start_date, end_date, counties, months, timerange, days):
 )
 def update_theme(dark_theme):
     if dark_theme:
-        return "container-fluid bg-dark text-white",\
-            "p-0 m-0 bg-dark row",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 btn-group bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "card p-1 m-1 bg-dark text-white",\
-            "p-0 m-0 card  bg-dark text-white",\
-            "p-0 m-0 card bg-dark text-white",\
-            "row p-0 m-0 bg-dark text-white",\
-            "col p-0 m-0 bg-dark text-white"
+        return "container-fluid bg-dark text-white", \
+               "p-0 m-0 bg-dark row", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 btn-group bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "card p-1 m-1 bg-dark text-white", \
+               "p-0 m-0 card  bg-dark text-white", \
+               "p-0 m-0 card bg-dark text-white", \
+               "row p-0 m-0 bg-dark text-white", \
+               "col p-0 m-0 bg-dark text-white"
     else:
-        return "container-fluid bg-white text-dark",\
-            "p-0 m-0 bg-white row",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 btn-group bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "card p-1 m-1 bg-white text-dark",\
-            "p-0 m-0 card  bg-white text-dark",\
-            "p-0 m-0 card bg-white text-dark",\
-            "row p-0 m-0 bg-white text-dark",\
-            "col p-0 m-0 bg-white text-dark"
+        return "container-fluid bg-white text-dark", \
+               "p-0 m-0 bg-white row", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 btn-group bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "card p-1 m-1 bg-white text-dark", \
+               "p-0 m-0 card  bg-white text-dark", \
+               "p-0 m-0 card bg-white text-dark", \
+               "row p-0 m-0 bg-white text-dark", \
+               "col p-0 m-0 bg-white text-dark"
 
 
 @app.callback(
-    [Output('incident-text', "children"), Output('month-text', "children"), Output('time-text', "children"), Output('response-text', "children"), Output(component_id='response-text',
-                                                                                                                                                         component_property='style'), Output(component_id='time-text', component_property='style'), Output(component_id='month-text', component_property='style')],
+    [Output('incident-text', "children"), Output('month-text', "children"), Output('time-text', "children"),
+     Output('response-text', "children"), Output(component_id='response-text',
+                                                 component_property='style'),
+     Output(component_id='time-text', component_property='style'),
+     Output(component_id='month-text', component_property='style')],
     [Input("date-picker", "date"),
      Input("date-picker-end", "date"),
      Input('county', 'value'),
      Input("month-selector", "value"),
-     Input("time-slider", "value"),  Input("day-selector", "value"),
+     Input("time-slider", "value"), Input("day-selector", "value"),
      ]
 )
-def update_incidents(start_date, end_date, counties, datemonth, timerange,   days):
-
+def update_incidents(start_date, end_date, counties, datemonth, timerange, days):
     result = return_incidents(
-        start_date, end_date, counties, datemonth, timerange,   days)
-    
+        start_date, end_date, counties, datemonth, timerange, days)
+
     timemin, timemax = timerange
     responsefilter = -1
     if result is None or len(result) == 0:
-        return " Past Incidents: %d" % (0), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
-   
+        return " Past Incidents: %d" % (0), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (
+            timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), \
+               ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[
+                   responsefilter > 0], \
+               ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[
+                   timemin > 0 or timemax < 24], \
+               ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[
+                   datemonth is not None and len(datemonth) != 0]
 
-    return "Past Incidents: %d" % (len(result)), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[timemin > 0 or timemax < 24], ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[datemonth is not None and len(datemonth) != 0]
+    return "Past Incidents: %d" % (len(result)), "Months: %s" % (str(datemonth)), "Time %s:00 to %s:00" % (
+        timerange[0], timerange[1]), "Response Time >%s minutes" % (str(responsefilter)), \
+           ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[responsefilter > 0], \
+           ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[
+               timemin > 0 or timemax < 24], \
+           ({'display': 'none'}, {'display': 'block', 'text-align': 'left', 'font-weight': 'bold'})[
+               datemonth is not None and len(datemonth) != 0]
 
 
 cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
@@ -746,25 +774,25 @@ for i in range(0, 101, 1):
 
 
 def plotly_linestring(linestring, grouped_xdsegid, prediction, first=False):
-    colorval = discr_map[int(prediction*100)]
+    colorval = discr_map[int(prediction * 100)]
     if first:
-        fig= go.Scattermapbox(
+        fig = go.Scattermapbox(
             lat=np.array(np.array(linestring.coords)[:, 1]),
             lon=np.array(np.array(linestring.coords)[:, 0]),
             mode='lines+markers',
-             marker=dict(
-            size=0,
-            showscale=True,
-            colorscale=[[0, 'green'],
-                        [0.5, 'yellow'],
-                        [1, 'red']],
-            cmin=0,
-            cmax=1
-        ),
+            marker=dict(
+                size=0,
+                showscale=True,
+                colorscale=[[0, 'green'],
+                            [0.5, 'yellow'],
+                            [1, 'red']],
+                cmin=0,
+                cmax=1
+            ),
             name="group {}".format(grouped_xdsegid),
-            line=dict(color= colors.to_hex(colorval, keep_alpha=False), width= 4),
+            line=dict(color=colors.to_hex(colorval, keep_alpha=False), width=4),
             text="likelihood {0}".format(prediction)
-    )        
+        )
         return fig
     else:
         return go.Scattermapbox(
@@ -772,9 +800,9 @@ def plotly_linestring(linestring, grouped_xdsegid, prediction, first=False):
             lon=np.array(np.array(linestring.coords)[:, 0]),
             mode='lines',
             name="group {}".format(grouped_xdsegid),
-            line=dict(color= colors.to_hex(colorval, keep_alpha=False), width= 4),
+            line=dict(color=colors.to_hex(colorval, keep_alpha=False), width=4),
             text="likelihood {0}".format(prediction)
-    )
+        )
 
 
 def create_prediction_frame(pred):
@@ -786,128 +814,135 @@ def create_prediction_frame(pred):
             linestrings = feature.geoms
         else:
             continue
-        first=True
+        first = True
         for linestring in linestrings:
-            figures.append(plotly_linestring(linestring, name, prediction,first))
-            first=False
+            figures.append(plotly_linestring(linestring, name, prediction, first))
+            first = False
     return figures
-
 
 
 @cache.memoize()
 def get_prediction_frame(date):
-    result= pd.read_pickle('https://storage.googleapis.com/tdot_statresp_prediction_results/_LATEST/DF_likelihood_spacetime.pkl')
-    result['dayofweek']=result.time_local.dt.dayofweek
+    result = pd.read_pickle(
+        'https://storage.googleapis.com/tdot_statresp_prediction_results/_LATEST/DF_likelihood_spacetime.pkl')
+    result['dayofweek'] = result.time_local.dt.dayofweek
     return result
 
 
 from datetime import date
 
-@app.callback(
+
+@app.callback([
     Output('pred-selector', 'options'),
-    Output('pred-selector', 'value'),
+    Output('pred-selector', 'value')],
     [
-     Input('county', 'value'),
-     Input("time-slider", "value"),   Input("day-selector", "value"), Input("theme-toggle", "on"), ]
+        Input('county', 'value'),
+        Input("time-slider", "value"), Input("day-selector", "value"), Input("theme-toggle", "on"), ]
 )
 def return_options_for_pred_map(counties, timerange, days, darktheme):
     today = date.today()
-    df=get_prediction_frame(today.strftime("%d/%m/%Y"))    
-    countycondition=True
-    daycondition=True
-    timecondition=True
+    df = get_prediction_frame(today.strftime("%d/%m/%Y"))
+    countycondition = True
+    daycondition = True
+    timecondition = True
     if counties is not None and len(counties) == 1:
-        countycondition=(df.county_inrix.isin(counties))
-        #print(counties)
+        countycondition = (df.county_inrix.isin(counties))
+        # print(counties)
         onecounty = counties[0]
         latone = tncounties[tncounties.county ==
-                                onecounty].latitude.iloc[0]
+                            onecounty].latitude.iloc[0]
         lonone = tncounties[tncounties.county ==
-                                onecounty].longitude.iloc[0]
+                            onecounty].longitude.iloc[0]
     else:
-        return [{'label': 'NoResult','value':'NoResult'}], 'NoResult'
+        return [{'label': 'NoResult', 'value': 'NoResult'}], 'NoResult'
     timemin, timemax = timerange
     hourmax = int(timemax)
     hourmin = int(timemin)
-  
-    if hourmin>0 or hourmax <24:
+
+    if hourmin > 0 or hourmax < 24:
         starttime = tt(hour=hourmin)
         if hourmax != 24:
-            endtime = tt(hour=max(0, hourmax-1), second=59)
+            endtime = tt(hour=max(0, hourmax - 1), second=59)
         else:
             endtime = tt(hour=23, second=59)
-        #print(starttime,endtime)
+        # print(starttime,endtime)
         timecondition = ((df['time_local'].dt.time >= starttime) & (df['time_local'].dt.time <= endtime))
 
-    if (days is not None and len(days)>=1):
-        daycondition=(df.dayofweek.isin(days))
+    if (days is not None and len(days) >= 1):
+        daycondition = (df.dayofweek.isin(days))
 
     result = df[timecondition & daycondition & countycondition]
 
-    if (result.empty or len(result)==0):
-        return [{'label': 'NoResult','value':'NoResult'}], 'NoResult'
+    if (result.empty or len(result) == 0):
+        return [{'label': 'NoResult', 'value': 'NoResult'}], 'NoResult'
 
-    result=result.sort_values(['time_local'])    
-    result['time_next']=result['time_local']+pd.Timedelta(4,'h')
-    result['time_local']=result['time_local'].apply(str)
-    result['time_next']=result['time_next'].apply(str)
-    time_local=result['time_local'].unique().tolist()
-    time_next=result[['time_local','time_next']].drop_duplicates()
-    return [{'label': str(i)+' to '+time_next[(time_next.time_local==i)][['time_next']].iloc[0], 'value': i} for i in time_local], time_local[0]
+    result = result[result.time_local >= pd.Timestamp.now()]
+    result = result.sort_values(['time_local'])
+    result['time_next'] = result['time_local'] + pd.Timedelta(4, 'h')
+    result['time_local'] = result['time_local'].apply(str)
+    result['time_next'] = result['time_next'].apply(str)
+    label = result[['time_local', 'time_next']].drop_duplicates()
+    label['label'] = label.time_local.astype(str) + ' TO ' + label.time_next.astype(str)
+    # print(label.head(4))
+    outputlist = []
+    for row in label.itertuples():
+        outputlist.append({'label': row.label, 'value': row.time_local})
+
+    initialselection = label.time_local.iloc[0]
+
+    return outputlist, initialselection
+    # str(i) + ' to ' + time_next[(time_next.time_local == i)][['time_next']].iloc[0]
 
 
 @app.callback(
     Output('map-incidents-predictions', 'figure'),
     [
-     #Input("date-picker", "date"),
-     #Input("date-picker-end", "date"),
-     #Input("map-graph-radius", "value"),
-     Input('county', 'value'),
-     #Input("month-selector", "value"),
-     Input("theme-toggle", "on"),Input("pred-selector","value") ]
+        # Input("date-picker", "date"),
+        # Input("date-picker-end", "date"),
+        # Input("map-graph-radius", "value"),
+        Input('county', 'value'),
+        # Input("month-selector", "value"),
+        Input("theme-toggle", "on"), Input("pred-selector", "value")]
 )
-#start_date, end_date, radius, datemonth,
-def update_map_incident_predictions( counties, darktheme,timechosen):
-
-    #print('inside the map prediction')
+# start_date, end_date, radius, datemonth,
+def update_map_incident_predictions(counties, darktheme, timechosen):
+    # print('inside the map prediction')
     today = date.today()
-    df=get_prediction_frame(today.strftime("%d/%m/%Y"))
+    df = get_prediction_frame(today.strftime("%d/%m/%Y"))
     latone = latInitial
     lonone = lonInitial
     zoomvalue = 9
-    countycondition=True
-    daycondition=True
-    timecondition=True
+    countycondition = True
+    daycondition = True
+    timecondition = True
 
     if counties is not None and len(counties) == 1:
-        countycondition=(df.county_inrix.isin(counties))
-        #print(counties)
+        countycondition = (df.county_inrix.isin(counties))
+        # print(counties)
         onecounty = counties[0]
         latone = tncounties[tncounties.county ==
-                                onecounty].latitude.iloc[0]
+                            onecounty].latitude.iloc[0]
         lonone = tncounties[tncounties.county ==
-                                onecounty].longitude.iloc[0]
+                            onecounty].longitude.iloc[0]
     else:
         return empty_fig("Please select a county to see prediction results")
 
-    if timechosen is None or len(timechosen)==0:
+    if timechosen is None or len(timechosen) == 0:
         return empty_fig("Please select a specific date and time from drop down above.")
 
-    timecondition=(df.time_local==timechosen)
+    timecondition = (df.time_local == timechosen)
     result = df[timecondition & daycondition & countycondition]
 
-    if (result.empty or len(result)==0):
+    if (result.empty or len(result) == 0):
         return empty_fig("No data found. We only generate for segments that rank in top 20% for incident rates.")
 
-
-    result=result.sort_values(['time_local'])
-    result['time_next']=result['time_local']+pd.Timedelta(4,'h')
-    result['time_next']=result['time_next'].apply(str)
+    result = result.sort_values(['time_local'])
+    result['time_next'] = result['time_local'] + pd.Timedelta(4, 'h')
+    result['time_next'] = result['time_next'].apply(str)
     result['time_local'] = result['time_local'].apply(str)
-    result['geometry']=result['geometry'].apply(wkt.loads)
+    result['geometry'] = result['geometry'].apply(wkt.loads)
     time_local = result['time_local'].unique().tolist()
-    time_next=result['time_next'].unique().tolist()
-
+    time_next = result['time_next'].unique().tolist()
 
     fig = go.Figure(data=create_prediction_frame(result[result.time_local == time_local[0]]))
 
@@ -917,20 +952,18 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
     # 
     #               mapbox_style="stamen-terrain",  zoom=11,animation_frame='time_local')
 
-     
-    
-
     fig.update_layout(autosize=True,
                       margin=go.layout.Margin(l=0, r=35, t=0, b=0),
                       showlegend=False,
-                      title= dict( 
-                            text='<b>'+ time_local[0]+ ' to ' + time_next[0] + '</b> (Only segments with top 20 percent rates shown).',
-                            x=0.25,
-                            font=dict(color="white" if darktheme else "#1E1E1E"),
-                            y=0.96,
-                            xanchor="left",
-                            yanchor="bottom",
-                            ),
+                      title=dict(
+                          text='<b>' + time_local[0] + ' to ' + time_next[
+                              0] + '</b> (Only segments with top 20 percent rates shown).',
+                          x=0.25,
+                          font=dict(color="white" if darktheme else "#1E1E1E"),
+                          y=0.96,
+                          xanchor="left",
+                          yanchor="bottom",
+                      ),
 
                       mapbox=dict(
                           accesstoken=mapbox_access_token,
@@ -939,43 +972,43 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
                           bearing=0,
                           zoom=zoomvalue,
                       ),
-                              updatemenus=[
-                                        dict(
-                                            buttons=(
-                                                [
-                                                    dict(
-                                                        args=[
-                                                            {
-                                                                "mapbox.zoom": zoomvalue,
-                                                                "mapbox.center.lon": lonone,
-                                                                "mapbox.center.lat": latone,
-                                                                "mapbox.bearing": 0,
-                                                                "mapbox.style": "dark" if darktheme else "light",
-                                                            }
-                                                        ],
-                                                        label="Reset Zoom",
-                                                        method="relayout",
-                                                    )
-                                                ]
-                                            ),
-                                            direction="left",
-                                            pad={"r": 0, "t": 0, "b": 0, "l": 0},
-                                            showactive=False,
-                                            type="buttons",
-                                            x=0.45,
-                                            y=0.02,
-                                            xanchor="left",
-                                            yanchor="bottom",
-                                            bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
-                                            borderwidth=1,
-                                            bordercolor="#6d6d6d",
-                                            font=dict(color="white" if darktheme else "#1E1E1E"),
-                                        ),
-                                    ],
+                      updatemenus=[
+                          dict(
+                              buttons=(
+                                  [
+                                      dict(
+                                          args=[
+                                              {
+                                                  "mapbox.zoom": zoomvalue,
+                                                  "mapbox.center.lon": lonone,
+                                                  "mapbox.center.lat": latone,
+                                                  "mapbox.bearing": 0,
+                                                  "mapbox.style": "dark" if darktheme else "light",
+                                              }
+                                          ],
+                                          label="Reset Zoom",
+                                          method="relayout",
+                                      )
+                                  ]
+                              ),
+                              direction="left",
+                              pad={"r": 0, "t": 0, "b": 0, "l": 0},
+                              showactive=False,
+                              type="buttons",
+                              x=0.45,
+                              y=0.02,
+                              xanchor="left",
+                              yanchor="bottom",
+                              bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+                              borderwidth=1,
+                              bordercolor="#6d6d6d",
+                              font=dict(color="white" if darktheme else "#1E1E1E"),
+                          ),
+                      ],
                       )
-   
-    #fig.update_traces(marker_colorbar_tickfont_color="white" if darktheme else "#1E1E1E", selector=dict(type='scatter'))
-    #fig.update_traces(textfont_color="white" if darktheme else "#1E1E1E")
+
+    # fig.update_traces(marker_colorbar_tickfont_color="white" if darktheme else "#1E1E1E", selector=dict(type='scatter'))
+    # fig.update_traces(textfont_color="white" if darktheme else "#1E1E1E")
 
     return fig
 
@@ -988,9 +1021,9 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
      Input("map-graph-radius", "value"),
      Input('county', 'value'),
      Input("month-selector", "value"),
-     Input("time-slider", "value"),   Input("day-selector", "value"), Input("theme-toggle", "on"), ]
+     Input("time-slider", "value"), Input("day-selector", "value"), Input("theme-toggle", "on"), ]
 )
-def update_map_graph(start_date, end_date, radius, counties, datemonth, timerange,   days, darktheme):
+def update_map_graph(start_date, end_date, radius, counties, datemonth, timerange, days, darktheme):
     result = return_incidents(
         start_date, end_date, counties, datemonth, timerange, days)
 
@@ -1015,8 +1048,8 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
         except:
             pass
 
-    fig = px.density_mapbox(result, lat="latitude", lon="longitude",  hover_data=['incidentNumber'],
-                            mapbox_style="open-street-map", radius=radius)
+    fig = px.density_mapbox(result, lat="latitude", lon="longitude", hover_data=['incidentNumber'],
+                            mapbox_style="open-street-map", radius=radius, color_continuous_scale='Plasma')
     fig.update_layout(
         autosize=True,
         margin=go.layout.Margin(l=0, r=35, t=0, b=0),
@@ -1075,10 +1108,9 @@ def update_map_graph(start_date, end_date, radius, counties, datemonth, timerang
      Input("month-selector", "value"),
      Input("time-slider", "value"), Input("day-selector", "value"), Input("theme-toggle", "on"), ]
 )
-def update_map_incidents_month(start_date, end_date, radius, counties, datemonth, timerange,   days, darktheme):
-
+def update_map_incidents_month(start_date, end_date, radius, counties, datemonth, timerange, days, darktheme):
     result = return_incidents(
-        start_date, end_date, counties, datemonth, timerange,   days)
+        start_date, end_date, counties, datemonth, timerange, days)
     if result is None or len(result) == 0:
         return empty_fig()
     monthlist = result['month-year'].unique().tolist()
@@ -1107,7 +1139,8 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                                 onecounty].longitude.iloc[0]
         except:
             pass
-    fig = px.density_mapbox(result, animation_frame='month-year', lat="latitude", lon="longitude",  hover_data=['incidentNumber'],
+    fig = px.density_mapbox(result, animation_frame='month-year', lat="latitude", lon="longitude",
+                            hover_data=['incidentNumber'],
                             mapbox_style="open-street-map", radius=radius)
     fig.update_layout(autosize=True,
                       margin=go.layout.Margin(l=0, r=35, t=0, b=0),
@@ -1177,7 +1210,6 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
                     "label": "Reset Zoom",
                     "method": "relayout"
 
-
                 },
                 {
                     "args": [None, {"fromcurrent": True}],
@@ -1200,7 +1232,7 @@ def update_map_incidents_month(start_date, end_date, radius, counties, datemonth
             "xanchor": "left",
             "y": 0.02,
             "yanchor": "bottom",
-            "bgcolor":  "#1E1E1E" if darktheme else "#f8f9fa",
+            "bgcolor": "#1E1E1E" if darktheme else "#f8f9fa",
             "borderwidth": 1,
             "bordercolor": "#6d6d6d",
             "font": {"color": "white" if darktheme else "#1E1E1E"}
@@ -1225,7 +1257,7 @@ def hourhist(result, datemonth, darktheme):
     result['h'] = result['hour'].astype(int)
     xVal = result['hour']
     yVal = result['count'].fillna(0)
-    colorVal = ["#2202d1"]*25
+    colorVal = ["#2202d1"] * 25
     layout = go.Layout(
         bargap=0.05,
         autosize=True,
@@ -1243,7 +1275,8 @@ def hourhist(result, datemonth, darktheme):
             range=[-1, 25],
             showgrid=False,
             tickvals=[x for x in range(0, 24)],
-            ticktext=['12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
+            ticktext=['12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
+                      '12 PM', '1 PM', '2 PM',
                       '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'],
             fixedrange=True,
             ticksuffix="",
@@ -1283,7 +1316,7 @@ def hourhist(result, datemonth, darktheme):
 def dayhist(result, datemonth, darktheme):
     result = result.groupby(['day_of_week']).count().reset_index()
     result['count'] = result['incidentNumber']
-    colorVal = ["#2202d1"]*25
+    colorVal = ["#2202d1"] * 25
     xVal = result['day_of_week']
     yVal = result['count'].fillna(0)
     layout = go.Layout(
@@ -1338,7 +1371,7 @@ def dayhist(result, datemonth, darktheme):
 
 @cache.memoize()
 def monthhist(result, datemonth, darktheme):
-    colorVal = ["#2202d1"]*25
+    colorVal = ["#2202d1"] * 25
     result = result.groupby(['month']).count().reset_index()
     result['count'] = result['incidentNumber']
     result['m'] = result['month'].astype(int)
@@ -1402,8 +1435,8 @@ def monthhist(result, datemonth, darktheme):
 
 @cache.memoize()
 def incidentsfeature(df_merged, feature, darktheme):
-    colorVal = ["#2202d1"]*25
-    feature_cat = feature+'_cat_'
+    colorVal = ["#2202d1"] * 25
+    feature_cat = feature + '_cat_'
     df_merged_ = categorize_numerical_features(
         df_merged[[feature, metadata['pred_name_TF']]])
     df_incidentcount = df_merged_[[metadata['pred_name_TF'], feature_cat]].groupby(
@@ -1492,7 +1525,7 @@ def incidentsfeature(df_merged, feature, darktheme):
 
 @cache.memoize()
 def incidentsfeaturecombo(result, datemonth, darktheme):
-    colorVal = ["#2202d1"]*25
+    colorVal = ["#2202d1"] * 25
     All_Possible_Dic, All_Possible_Filters = Filter_Combo_Builder()
     result = categorize_numerical_features(
         result[['incident_occurred', 'congestion_mean', 'temp_mean', 'precip_mean', 'is_weekend']])
@@ -1561,10 +1594,13 @@ def incidenttotals(result, datemonth, darktheme):
     fig.update_yaxes(
         showgrid=False
     )
-    fig.update_layout(plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa", yaxis_title_text='Count', margin=go.layout.Margin(
-        l=10, r=0, t=0, b=30), paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa", font=dict(color="white" if darktheme else "#1E1E1E"))
+    fig.update_layout(plot_bgcolor="#1E1E1E" if darktheme else "#f8f9fa", yaxis_title_text='Count',
+                      margin=go.layout.Margin(
+                          l=10, r=0, t=0, b=30), paper_bgcolor="#1E1E1E" if darktheme else "#f8f9fa",
+                      font=dict(color="white" if darktheme else "#1E1E1E"))
 
     return fig
+
 
 # %%
 
@@ -1574,19 +1610,19 @@ def incidenttotals(result, datemonth, darktheme):
     [Input("date-picker", "date"),
      Input("date-picker-end", "date"),
      Input('county', 'value'), Input("month-selector", "value"), Input("histogram-basis",
-                                                                       "active_tab"), Input("time-slider", "value"),  Input("day-selector", "value"),
+                                                                       "active_tab"), Input("time-slider", "value"),
+     Input("day-selector", "value"),
      Input('feature', 'value'),
      Input("theme-toggle", "on"),
      ]
 )
-def update_bar_chart(start_date, end_date, counties, datemonth, histogramkind, timerange,   days, feature, darktheme):
-
+def update_bar_chart(start_date, end_date, counties, datemonth, histogramkind, timerange, days, feature, darktheme):
     if histogramkind == "incidentsfeature" or histogramkind == "incidentsfeaturecombo":
         result = return_merged(start_date, end_date,
                                counties, datemonth, timerange, days)
     else:
         result = return_incidents(
-            start_date, end_date, counties, datemonth, timerange,   days)
+            start_date, end_date, counties, datemonth, timerange, days)
 
     if result is None or len(result) == 0:
         return empty_fig()
