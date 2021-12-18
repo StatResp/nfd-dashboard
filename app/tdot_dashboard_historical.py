@@ -918,7 +918,7 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
     #               mapbox_style="stamen-terrain",  zoom=11,animation_frame='time_local')
 
      
-
+    
 
     fig.update_layout(autosize=True,
                       margin=go.layout.Margin(l=0, r=35, t=0, b=0),
@@ -975,6 +975,7 @@ def update_map_incident_predictions( counties, darktheme,timechosen):
                       )
    
     #fig.update_traces(marker_colorbar_tickfont_color="white" if darktheme else "#1E1E1E", selector=dict(type='scatter'))
+    #fig.update_traces(textfont_color="white" if darktheme else "#1E1E1E")
 
     return fig
 
