@@ -26,6 +26,9 @@ Go to your browser and open http://127.0.0.1:8080. It should look like below.
 Todo:
 - Test with Docker (only tested locally as of 12.29)
 - Create roles for users
+-    Note: flask user may be a different paradigm than currently used flask-login/dance but premise is similar
+-    https://flask-user.readthedocs.io/en/latest/authorization.html
+-    https://flask-user.readthedocs.io/en/latest/basic_app.html
 - Allow admin role to add users to whitelist
 - Only allow whitelisted google authorized users access to dashboard
 - Incorporate other authorizations (e.g. OICD, ...) 
