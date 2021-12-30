@@ -18,8 +18,13 @@ Go to your browser and open http://127.0.0.1:8080. It should look like below.
      style="float: left; margin-right: 0px;" />
 
 # Authentication Changes/Notes
-Flask server running
-Dash piggybacking as a module
-Pass Flask app server into create_dashboard()
-Allows Dash to use own Flask instance instead of its own
+- Flask server running
+- Dash piggybacking as a module
+- Pass Flask app server into create_dashboard()
+- Allows Dash to use own Flask instance instead of its own
 
+Todo:
+- Create roles for users
+- Allow admin role to add users to whitelist
+- Only allow whitelisted google authorized users access to dashboard
+- Incorporate other authorizations (e.g. OICD, ...) 
