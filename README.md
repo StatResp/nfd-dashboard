@@ -24,6 +24,7 @@ Go to your browser and open http://127.0.0.1:8080. It should look like below.
 - Allows Dash to use own Flask instance instead of its own
 
 Todo:
+- Test with Docker (only tested locally as of 12.29)
 - Create roles for users
 - Allow admin role to add users to whitelist
 - Only allow whitelisted google authorized users access to dashboard
