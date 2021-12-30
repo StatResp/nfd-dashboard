@@ -29,3 +29,7 @@ Todo:
 - Allow admin role to add users to whitelist
 - Only allow whitelisted google authorized users access to dashboard
 - Incorporate other authorizations (e.g. OICD, ...) 
+
+Issues
+- When testing locally had to run pip install -r requirements.txt twice [error: invalid command 'bdist_wheel']
+- This related to easydev, colormap, and dash-daq (12.29)
