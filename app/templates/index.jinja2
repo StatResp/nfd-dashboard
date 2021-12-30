@@ -1,0 +1,48 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+    <h3>ScopeLab AI - Dashboards Login</h3>
+    {% if not current_user.is_authenticated %}
+        <div class="row">
+            <div class="col-md-3">
+                <a class="btn btn-outline-dark" href="/google" role="button" style="text-transform:none">
+                    <img width="20px" style="margin-bottom:3px; margin-right:5px" alt="Google sign-in"
+                         src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"/>
+                    Login with Google
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a class="btn btn-outline-dark" href="/dashapp" role="button" style="text-transform:none">
+                    <img width="20px" src="{{ url_for('static', filename='img/logo.png') }}" class="logo">
+                    Open Dashboard
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <p>Hi, {{ current_user.name }} [<strong>{{ current_user.email }}</strong>]. You have logged in using a Google
+            Account.</p>
+        {% if google_data is not none %}
+            <div class="info">
+                <p>User info fetched from <strong>{{ fetch_url }}</strong></p>
+                {% for key, value in google_data.items() %}
+                    <p><strong>{{ key }}</strong>: {{ value }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-md-3">
+                <a class="btn btn-outline-dark" href="/logout" role="button" style="text-transform:none">
+                    Logout
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a class="btn btn-outline-dark" href="/dashapp" role="button" style="text-transform:none">
+                    ScopeLab Dashboard
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}s
+
+
